@@ -7,13 +7,30 @@ import Crypto from 'crypto';
 export interface IUser {
     name: string;
     email: string;
-    photo?: string;
+    isRegistered: boolean; // whether is registered by user
+    role: TUserRole;
+    photoUrl?: string;
+    photoOriginalUrl?: string;
     password: string;
     passwordConfirm: string;
     passwordUpdatedAt?: Date;
     passwordResetToken?: string;
     passwordResetExpiresTimestamp?: number;
-    role: TUserRole;
+    friends: IUserFriend[];
+    groups: IUserGroup[];
+    expenses: IUserExpense[];
+}
+
+export interface IUserFriend {
+    id: string;
+}
+
+export interface IUserGroup {
+    id: string;
+}
+
+export interface IUserExpense {
+    id: string;
 }
 
 export enum EUserRole {
@@ -48,12 +65,29 @@ const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(
             lowercase: true,
             validate: [Validator.isEmail, 'email format invalid'],
         },
-        photo: {
+        isRegistered: {
+            type: Boolean,
+            default: false,
+        },
+        role: {
+            type: String,
+            enum: Utility.convertEnumValueToArray(EUserRole),
+            default: 'user',
+        },
+        photoUrl: {
+            type: String,
+        },
+        photoOriginalUrl: {
             type: String,
         },
         password: {
             type: String,
-            required: [true, 'password can not empty'],
+            required: [
+                function () {
+                    return this.isRegistered === true;
+                },
+                'password can not empty',
+            ],
             minlength: 8,
             select: false,
         },
@@ -61,7 +95,12 @@ const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(
         // only works on create and save
         passwordConfirm: {
             type: String,
-            required: [true, 'passwordConfirm can not empty'],
+            required: [
+                function () {
+                    return this.isRegistered === true;
+                },
+                'passwordConfirm can not empty',
+            ],
             validate: {
                 validator: function (value) {
                     return value === this.password;
@@ -79,11 +118,28 @@ const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(
         passwordResetExpiresTimestamp: {
             type: Number,
         },
-        role: {
-            type: String,
-            enum: Utility.convertEnumValueToArray(EUserRole),
-            default: 'user',
-        },
+
+        friends: [
+            {
+                id: {
+                    type: String,
+                },
+            },
+        ],
+        groups: [
+            {
+                id: {
+                    type: String,
+                },
+            },
+        ],
+        expenses: [
+            {
+                id: {
+                    type: String,
+                },
+            },
+        ],
     },
     {
         collection: 'User',
@@ -125,7 +181,9 @@ userSchema.methods.isPasswordChanged = function (jwtTimestamp: number) {
 userSchema.methods.getPasswordResetToken = function () {
     const resetToken = Crypto.randomBytes(32).toString('hex');
 
-    this.passwordResetToken = Crypto.createHash('sha256').update(resetToken).digest('hex');
+    this.passwordResetToken = Crypto.createHash('sha256') //
+        .update(resetToken)
+        .digest('hex');
 
     this.passwordResetExpiresTimestamp = Date.now() + Number(process.env.RESET_PASSWORD_EXPIRES_MIN) * 60 * 1000;
 
