@@ -1,3 +1,6 @@
-export * from './server';
-export * from './auth';
-export * from './user';
+import { AuthApi } from './auth';
+import { FileApi } from './file';
+import { ServerApi } from './server';
+import { UserApi } from './user';
+
+export const Apis = [ AuthApi, FileApi, ServerApi, UserApi ];

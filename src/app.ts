@@ -9,7 +9,7 @@ import XSSClean from 'xss-clean';
 import { ErrorService } from './helpers';
 import { ErrorController } from './controllers';
 
-import { ServerApi, AuthApi, UserApi } from './routes';
+import { Apis } from './routes';
 
 export const app = Express();
 
@@ -43,7 +43,7 @@ const limiter = RateLimit({
 app.use('/api', limiter);
 
 // load all routes
-app.use(process.env.API_BASE, [ServerApi, AuthApi, UserApi]);
+app.use(process.env.API_BASE, Apis);
 
 // handle not found error
 app.all('*', (req, res, next) => {
