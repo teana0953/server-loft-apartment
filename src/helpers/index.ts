@@ -6,6 +6,8 @@ import { MongoDBHelper } from './mongoDB';
 export const MongoDBService = new MongoDBHelper();
 
 export * from './query';
+export * from './photo';
+export * from './file-mongo';
 
 export * from './email';
 import { EmailHelper } from './email';
