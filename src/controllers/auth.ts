@@ -1,6 +1,7 @@
 import { IDB, IRequest, IResponse, IResponseBase } from '../models';
-import { EmailService, ErrorService } from '../helpers';
+import { EmailService, ErrorService, PhotoHelper } from '../helpers';
 import { CookieOptions, Request, Response } from 'express';
+import { savePhoto } from './user';
 import JWT from 'jsonwebtoken';
 import Crypto from 'crypto';
 
@@ -14,12 +15,26 @@ export type OutputSignup = OutputUserToken;
 export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, res: Response<OutputSignup>) => {
     let input: InputSignup = req.body;
 
+    let photoOriginalUrl: string = undefined;
+    let photoUrl: string = undefined;
+    if (req.file) {
+        photoOriginalUrl = await savePhoto(req.file.buffer, undefined);
+
+        req.file.buffer = await PhotoHelper.resize(req.file.buffer, {
+            format: 'jpeg',
+            height: 120,
+            width: 120,
+        });
+        photoUrl = await savePhoto(req.file.buffer, undefined);
+    }
+
     const newUser = await IDB.User.create({
         name: input.name,
         email: input.email,
         password: input.password,
         passwordConfirm: input.passwordConfirm,
-        photo: input.photo,
+        photoUrl,
+        photoOriginalUrl,
         role: input.role,
     });
 

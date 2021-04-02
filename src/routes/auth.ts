@@ -9,6 +9,7 @@ AuthApi.route(`/signup`).post(
     BodyParser.json({
         limit: '10mb',
     }),
+    Middleware.uploadSinglePhoto('photo'),
     AuthController.signup,
 );
 
