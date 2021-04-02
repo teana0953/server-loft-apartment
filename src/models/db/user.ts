@@ -4,23 +4,6 @@ import Validator from 'validator';
 import Bcrypt from 'bcrypt';
 import Crypto from 'crypto';
 
-export interface IUser {
-    name: string;
-    email: string;
-    isRegistered: boolean; // whether is registered by user
-    role: TUserRole;
-    photoUrl?: string;
-    photoOriginalUrl?: string;
-    password: string;
-    passwordConfirm: string;
-    passwordUpdatedAt?: Date;
-    passwordResetToken?: string;
-    passwordResetExpiresTimestamp?: number;
-    friends: IUserFriend[];
-    groups: IUserGroup[];
-    expenses: IUserExpense[];
-}
-
 export interface IUserFriend {
     id: string;
 }
@@ -44,6 +27,178 @@ export interface IUserJWTPayload {
     id: string;
 }
 
+export interface IUser {
+    /**
+     *
+     */
+    name: string;
+
+    /**
+     *
+     */
+    email: string;
+
+    /**
+     * isRegistered
+     * @description whether is already registered by user
+     */
+    isRegistered: boolean;
+
+    /**
+     * isGoogleAuth
+     */
+    isGoogleAuth: boolean;
+
+    /**
+     *
+     */
+    role: TUserRole;
+
+    /**
+     *
+     */
+    photoUrl?: string;
+
+    /**
+     *
+     */
+    photoOriginalUrl?: string;
+
+    /**
+     *
+     */
+    password: string;
+
+    /**
+     *
+     */
+    passwordConfirm: string;
+
+    /**
+     * passwordUpdatedAt
+     * @description to check token is expired
+     */
+    passwordUpdatedAt?: Date;
+
+    /**
+     *
+     */
+    passwordResetToken?: string;
+
+    /**
+     *
+     */
+    passwordResetExpiresTimestamp?: number;
+
+    /**
+     *
+     */
+    friends: IUserFriend[];
+
+    /**
+     *
+     */
+    groups: IUserGroup[];
+
+    /**
+     *
+     */
+    expenses: IUserExpense[];
+}
+
+const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
+    name: {
+        type: String,
+        required: [true, 'name can not empty'],
+    },
+    email: {
+        type: String,
+        required: [true, 'email can not empty'],
+        unique: true,
+        lowercase: true,
+        validate: [Validator.isEmail, 'email format invalid'],
+    },
+    isRegistered: {
+        type: Boolean,
+        default: false,
+    },
+    isGoogleAuth: {
+        type: Boolean,
+        default: false,
+    },
+    role: {
+        type: String,
+        enum: Utility.convertEnumValueToArray(EUserRole),
+        default: 'user',
+    },
+    photoUrl: {
+        type: String,
+    },
+    photoOriginalUrl: {
+        type: String,
+    },
+    password: {
+        type: String,
+        required: [
+            function () {
+                return this.isRegistered === true;
+            },
+            'password can not empty',
+        ],
+        minlength: 8,
+        select: false,
+    },
+
+    // only works on create and save
+    passwordConfirm: {
+        type: String,
+        required: [
+            function () {
+                return this.isRegistered === true;
+            },
+            'passwordConfirm can not empty',
+        ],
+        validate: {
+            validator: function (value) {
+                return value === this.password;
+            },
+            message: 'password not the same',
+        },
+    },
+    passwordUpdatedAt: {
+        type: Date,
+        select: false,
+    },
+    passwordResetToken: {
+        type: String,
+    },
+    passwordResetExpiresTimestamp: {
+        type: Number,
+    },
+
+    friends: [
+        {
+            id: {
+                type: String,
+            },
+        },
+    ],
+    groups: [
+        {
+            id: {
+                type: String,
+            },
+        },
+    ],
+    expenses: [
+        {
+            id: {
+                type: String,
+            },
+        },
+    ],
+};
+
 export interface UserDocument extends IUser, Document {
     comparePassword(inputPassword: string, userPassword: string): Promise<boolean>;
     isPasswordChanged(jwtTimestamp: number): boolean;
@@ -53,94 +208,7 @@ export interface UserDocument extends IUser, Document {
 export interface UserModel extends Model<UserDocument> {}
 
 const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(
-    {
-        name: {
-            type: String,
-            required: [true, 'name can not empty'],
-        },
-        email: {
-            type: String,
-            required: [true, 'email can not empty'],
-            unique: true,
-            lowercase: true,
-            validate: [Validator.isEmail, 'email format invalid'],
-        },
-        isRegistered: {
-            type: Boolean,
-            default: false,
-        },
-        role: {
-            type: String,
-            enum: Utility.convertEnumValueToArray(EUserRole),
-            default: 'user',
-        },
-        photoUrl: {
-            type: String,
-        },
-        photoOriginalUrl: {
-            type: String,
-        },
-        password: {
-            type: String,
-            required: [
-                function () {
-                    return this.isRegistered === true;
-                },
-                'password can not empty',
-            ],
-            minlength: 8,
-            select: false,
-        },
-
-        // only works on create and save
-        passwordConfirm: {
-            type: String,
-            required: [
-                function () {
-                    return this.isRegistered === true;
-                },
-                'passwordConfirm can not empty',
-            ],
-            validate: {
-                validator: function (value) {
-                    return value === this.password;
-                },
-                message: 'password not the same',
-            },
-        },
-        passwordUpdatedAt: {
-            type: Date,
-            select: false,
-        },
-        passwordResetToken: {
-            type: String,
-        },
-        passwordResetExpiresTimestamp: {
-            type: Number,
-        },
-
-        friends: [
-            {
-                id: {
-                    type: String,
-                },
-            },
-        ],
-        groups: [
-            {
-                id: {
-                    type: String,
-                },
-            },
-        ],
-        expenses: [
-            {
-                id: {
-                    type: String,
-                },
-            },
-        ],
-    },
+    UserSchemaDefinition,
     {
         collection: 'User',
         toJSON: { virtuals: true },
