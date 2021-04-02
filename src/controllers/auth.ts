@@ -1,6 +1,6 @@
 import { IDB, IRequest, IResponse, IResponseBase } from '../models';
 import { EmailService, ErrorService, PhotoHelper } from '../helpers';
-import { CookieOptions, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { savePhoto } from './user';
 import JWT from 'jsonwebtoken';
 import Crypto from 'crypto';
@@ -38,7 +38,7 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
         role: input.role,
     });
 
-    res.json(getUserWithCookieToken(newUser, res));
+    res.json(getUserWithCookieToken(newUser, res, req));
 });
 
 /**
@@ -66,7 +66,7 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
         throw new ErrorService.AppError(errorMessage, 401);
     }
 
-    res.json(getUserWithCookieToken(user, res));
+    res.json(getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -164,7 +164,7 @@ export const resetPassword = ErrorService.catchAsync(async (req: Request<InputRe
     user.passwordResetExpiresTimestamp = undefined;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res));
+    res.json(getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -185,7 +185,7 @@ export const updatePassword = ErrorService.catchAsync(async (req: Request<InputU
     user.passwordConfirm = input.passwordConfirm;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res));
+    res.json(getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -204,21 +204,16 @@ function getToken(payload: IDB.IUserJWTPayload): string {
  * @param user
  * @returns
  */
-function getUserWithCookieToken(user: IDB.UserDocument, res: Response): OutputUserToken {
+function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req: Request<any>): OutputUserToken {
     const token: string = getToken({
         id: user.id,
     });
 
-    const cookieOptions: CookieOptions = {
+    res.cookie('token', token, {
         expires: new Date(Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN_HOUR) * 60 * 60 * 1000),
         httpOnly: true,
-    };
-
-    if (process.env.NODE_ENV === 'production') {
-        cookieOptions.secure = true;
-    }
-
-    res.cookie('token', token, cookieOptions);
+        secure: req.secure || req.headers['x-forwarded-proto'] === 'https', // heroku
+    });
 
     return {
         status: 'ok',
