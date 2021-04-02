@@ -5,6 +5,7 @@ export interface ISignup extends IMongooseBase {
     id: string;
     name: string;
     email: string;
-    photo?: string;
+    photoUrl?: string;
+    photoOriginalUrl?: string;
     role: IDB.TUserRole;
 }

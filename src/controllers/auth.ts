@@ -211,7 +211,8 @@ function getUserWithCookieToken(user: IDB.UserDocument, res: Response): OutputUs
             id: user.id,
             name: user.name,
             email: user.email,
-            photo: user.photo,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
             role: user.role,
         },
     };

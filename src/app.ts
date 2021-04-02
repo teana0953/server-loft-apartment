@@ -9,7 +9,7 @@ import XSSClean from 'xss-clean';
 import { ErrorService } from './helpers';
 import { ErrorController } from './controllers';
 
-import { ServerApi, AuthApi, DemoApi } from './routes';
+import { ServerApi, AuthApi, UserApi } from './routes';
 
 export const app = Express();
 
@@ -38,16 +38,16 @@ app.use(XSSClean());
 const limiter = RateLimit({
     max: Number(process.env.REQUEST_NUMBER_LIMIT), // request numbers
     windowMs: Number(process.env.REQUEST_LIMIT_PER_HOUR) * 60 * 1000,
-    message: 'Too many requests from this IP, please try again later',
+    message: 'too many requests from this IP, please try again later',
 });
 app.use('/api', limiter);
 
 // load all routes
-app.use(process.env.API_BASE, [ServerApi, AuthApi, DemoApi]);
+app.use(process.env.API_BASE, [ServerApi, AuthApi, UserApi]);
 
 // handle not found error
 app.all('*', (req, res, next) => {
-    next(new ErrorService.AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+    next(new ErrorService.AppError(`can't find ${req.originalUrl} on this server!`, 404));
 });
 
 // handle global error
