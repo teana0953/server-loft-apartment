@@ -1,13 +1,16 @@
 import { IDB } from "..";
 
 export interface ISignup {
-    id: string;
     name: string;
     email: string;
     photo?: string;
     password: string;
     passwordConfirm: string;
     role?: IDB.TUserRole;
+}
+
+export interface ISignupGoogle {
+    googleIdToken: string;
 }
 
 export interface ILogin {

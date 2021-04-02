@@ -13,6 +13,10 @@ AuthApi.route(`/signup`).post(
     AuthController.signup,
 );
 
+AuthApi.route(`/signup-google`).post(AuthController.signupGoogle);
+
+AuthApi.route('/check-auth').get(Middleware.checkAuth, AuthController.checkAuth);
+
 AuthApi.route(`/login`).post(AuthController.login);
 
 AuthApi.route(`/logout`).get(Middleware.checkAuth, AuthController.logout);

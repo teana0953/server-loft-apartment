@@ -141,7 +141,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
         type: String,
         required: [
             function () {
-                return this.isRegistered === true;
+                return this.isRegistered === true && this.isGoogleAuth !== true;
             },
             'password can not empty',
         ],
@@ -154,7 +154,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
         type: String,
         required: [
             function () {
-                return this.isRegistered === true;
+                return this.isRegistered === true && this.isGoogleAuth !== true;
             },
             'passwordConfirm can not empty',
         ],

@@ -1,9 +1,10 @@
 import { IDB, IRequest, IResponse, IResponseBase } from '../models';
-import { EmailService, ErrorService, PhotoHelper } from '../helpers';
+import { EmailService, ErrorService, GoogleAuthService, PhotoHelper } from '../helpers';
 import { Request, Response } from 'express';
 import { savePhoto } from './user';
 import JWT from 'jsonwebtoken';
 import Crypto from 'crypto';
+import { LoginTicket } from 'google-auth-library';
 
 export type OutputUserToken = IResponseBase<IResponse.IAuth.ISignup>;
 
@@ -40,6 +41,81 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
 
     res.json(getUserWithCookieToken(newUser, res, req));
 });
+
+/**
+ * Sign up Google
+ * @description if already exist, will login
+ */
+export type InputSignupGoogle = IRequest.IAuth.ISignupGoogle;
+export type OutputSignupGoogle = OutputUserToken;
+export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSignupGoogle>, res: Response<OutputSignupGoogle>) => {
+    let input: InputSignupGoogle = req.body;
+
+    if (!input.googleIdToken) {
+        throw new ErrorService.AppError('googleIdToken can not empty', 400);
+    }
+
+    // validate and get user info from google token
+    let ticket: LoginTicket = undefined;
+    let email: string = undefined;
+    let name: string = undefined;
+    let photoBuffer: Buffer = undefined;
+    try {
+        ticket = await GoogleAuthService.verify(input.googleIdToken);
+        email = ticket.getPayload().email;
+        name = ticket.getPayload().name;
+        photoBuffer = await GoogleAuthService.getPicture(ticket.getPayload().picture);
+    } catch (error) {
+        throw new ErrorService.AppError(`google: ${error}`, 400);
+    }
+
+    let test = new IDB.User();
+    test.name = name;
+    test.email = email;
+    await test.validate();
+
+    // check whether is created
+    let user: IDB.UserDocument = await IDB.User.findOne({ email: email });
+
+    if (!user) {
+        let photoOriginalUrl: string = undefined;
+        let photoUrl: string = undefined;
+        if (photoBuffer) {
+            photoOriginalUrl = await savePhoto(photoBuffer, undefined);
+
+            photoBuffer = await PhotoHelper.resize(photoBuffer, {
+                format: 'jpeg',
+                height: 120,
+                width: 120,
+            });
+            photoUrl = await savePhoto(photoBuffer, undefined);
+        }
+
+        user = await IDB.User.create({
+            name: name,
+            email: email,
+            photoUrl,
+            photoOriginalUrl,
+            role: 'user',
+            isRegistered: true,
+            isGoogleAuth: true,
+        });
+    } else {
+        if (user.isGoogleAuth === false || user.isRegistered === false) {
+            user.isRegistered = true;
+            user.isGoogleAuth = true;
+            await user.save();
+        }
+    }
+
+    res.json(getUserWithCookieToken(user, res, req));
+});
+
+export const checkAuth = (req: Request, res: Response<IResponseBase>) => {
+    res.json({
+        status: 'ok'
+    });
+};
 
 /**
  * Login
@@ -195,7 +271,7 @@ export const updatePassword = ErrorService.catchAsync(async (req: Request<InputU
  */
 function getToken(payload: IDB.IUserJWTPayload): string {
     return JWT.sign(payload, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_COOKIE_EXPIRES_IN_HOUR + 'h',
+        expiresIn: Number(process.env.JWT_COOKIE_EXPIRES_IN_HOUR) + 'h',
     });
 }
 
@@ -209,6 +285,13 @@ function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req:
         id: user.id,
     });
 
+    // "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --user-data-dir="C:/Chrome dev session" --args --disable-web-security
+    // const allowedOrigins = ['http://localhost:8080'];
+    // const origin = req.headers.origin;
+    // if (allowedOrigins.indexOf(origin) > -1) {
+    //     res.setHeader('Access-Control-Allow-Origin', origin);
+    // }
+    // res.header('Access-Control-Allow-Credentials', 'true');
     res.cookie('token', token, {
         expires: new Date(Date.now() + Number(process.env.JWT_COOKIE_EXPIRES_IN_HOUR) * 60 * 60 * 1000),
         httpOnly: true,
