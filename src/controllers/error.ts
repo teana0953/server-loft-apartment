@@ -14,7 +14,7 @@ export function handleGlobalError(err, req, res: Response, next) {
     err.status = err.status || 'error';
 
     if (process.env.NODE_ENV === 'production') {
-        let error = { ...err };
+        let error = { ...err, message: err.message };
 
         if (err.name === 'MongoError' || err instanceof Error) {
             error = handleMongooseError(err);
@@ -24,6 +24,9 @@ export function handleGlobalError(err, req, res: Response, next) {
         }
         if (error.name === 'TokenExpiredError') {
             error = handleJWTExpiredError();
+        }
+        if (error.name === 'MulterError') {
+            error = handleMulterError(error);
         }
 
         sendErrorProd(error, res);
@@ -47,6 +50,10 @@ function handleJWTError() {
 
 function handleJWTExpiredError() {
     return new ErrorService.AppError('token expired', 401);
+}
+
+function handleMulterError(err: Error) {
+    return new ErrorService.AppError(`file-handle: ${err.message}`, 400);
 }
 
 /**
