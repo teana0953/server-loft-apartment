@@ -9,6 +9,9 @@ export * from './query';
 export * from './photo';
 export * from './file-mongo';
 
+import { GoogleAuthHelper } from './google-auth';
+export const GoogleAuthService = new GoogleAuthHelper(process.env.GOOGLE_CLIENT_ID);
+
 export * from './email';
 import { EmailHelper } from './email';
 export const EmailService = new EmailHelper();
