@@ -1,8 +1,8 @@
 export * as ErrorService from './app-error';
 export * from './utility';
 
-export * from './mongoDB';
-import { MongoDBHelper } from './mongoDB';
+export * from './mongodb';
+import { MongoDBHelper } from './mongodb';
 export const MongoDBService = new MongoDBHelper();
 
 export * from './query';
