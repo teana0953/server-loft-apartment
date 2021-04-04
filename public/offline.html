@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>You are offline</title>
+
+    <!-- inline the webpage's stylesheet -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            background-color: #eaeaea;
+        }
+
+        body {
+            font-family: helvetica, arial, sans-serif;
+            /* margin: 2em; */
+        }
+
+        .content {
+            width: 400px;
+            height: 250px;
+
+            text-align: center;
+        }
+
+        .center_in_center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            -moz-transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            -o-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .content_button {
+            background-color: #4b6f8d;
+            color: #ffffff;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        h1 {
+            font-style: italic;
+            color: #2e4e72;
+        }
+
+        p {
+            margin-block: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content center_in_center">
+        <h1>Can't connect right now</h1>
+
+        <p>Click the button below to try reloading.</p>
+        <button class="content_button">Reload</button>
+    </div>
+
+
+    <!-- inline the webpage's javascript file -->
+    <script>
+        document.querySelector("button").addEventListener("click", () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+
+</html>

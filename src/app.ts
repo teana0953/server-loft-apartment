@@ -13,6 +13,8 @@ import { Apis } from './routes';
 
 export const app = Express();
 
+app.use(Express.static('public'));
+
 // set secure http headers, should position at first
 app.use(Helmet());
 
