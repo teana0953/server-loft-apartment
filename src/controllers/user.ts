@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { IDB, IResponse, IRequest, IResponseBase } from '../models';
 import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper } from '../helpers';
-import { Binary } from 'mongodb';
 import { UpdateQuery } from 'mongoose';
+import { validationResult } from 'express-validator';
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -29,7 +29,7 @@ export const updateMe = ErrorService.catchAsync(async (req: Request<InputUpdateM
             width: 120,
         });
         photoUrl = await savePhoto(req.file.buffer, req.user.photoUrl);
-        
+
         updateQuery = {
             ...updateQuery,
             photoUrl: photoUrl,
@@ -69,3 +69,22 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
 
     return await FileMongoHelper.saveFile(buffer, UserPhotoCollectionName, photoId);
 }
+
+/**
+ * Add friend
+ */
+export type InputAddFriend = IRequest.IUser.IAddFriend;
+export type OutputAddFriend = IResponseBase;
+export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFriend>, res: Response<OutputAddFriend>) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    let input: InputAddFriend = req.body;
+
+    console.log(input);
+    res.json({
+        status: 'ok',
+    });
+});
