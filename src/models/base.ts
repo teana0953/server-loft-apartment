@@ -1,3 +1,11 @@
+import { ParamSchema } from 'express-validator';
+
+type TSchema<K extends keyof any, T> = {
+    [P in K]: T;
+};
+
+export type TValidatorSchema<T> = TSchema<keyof T, ParamSchema>;
+
 export interface IMongooseBase {
     createdAt?: Date; // mongoose options timestamp
     updatedAt?: Date; // mongoose options timestamp
