@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import { IDB, IResponse, IRequest, IResponseBase } from '../models';
 import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper } from '../helpers';
 import { UpdateQuery } from 'mongoose';
@@ -82,8 +82,36 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
     }
 
     let input: InputAddFriend = req.body;
+    let user = req.user;
 
-    console.log(input);
+    let friend = await IDB.User.findOne({ email: input.email });
+    if (!!friend) {
+        if (user.friends.indexOf(friend.id) < 0) {
+            user.friends.push({
+                id: friend.id,
+            });
+            await user.save({ validateBeforeSave: false });
+        }
+    } else {
+        // if not exist, create user
+        let newUser = new IDB.User();
+        newUser.name = input.name || input.email.split('@')[0];
+        newUser.email = input.email;
+        newUser.isRegistered = false;
+        newUser.isGoogleAuth = false;
+        newUser.friends = [
+            {
+                id: user.id,
+            },
+        ];
+
+        let result = await newUser.save({ validateBeforeSave: false });
+        user.friends.push({
+            id: result.id,
+        });
+        await user.save({ validateBeforeSave: false });
+    }
+
     res.json({
         status: 'ok',
     });
