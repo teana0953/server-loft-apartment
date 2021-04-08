@@ -178,6 +178,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
 
     friends: [
         {
+            _id: false,
             id: {
                 type: String,
             },
@@ -185,6 +186,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
     ],
     groups: [
         {
+            _id: false,
             id: {
                 type: String,
             },
@@ -192,6 +194,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
     ],
     expenses: [
         {
+            _id: false,
             id: {
                 type: String,
             },
@@ -207,15 +210,12 @@ export interface UserDocument extends IUser, Document {
 
 export interface UserModel extends Model<UserDocument> {}
 
-const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(
-    UserSchemaDefinition,
-    {
-        collection: 'User',
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true },
-        timestamps: true,
-    },
-);
+const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(UserSchemaDefinition, {
+    collection: 'User',
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+    timestamps: true,
+});
 
 userSchema.pre('save', async function (next) {
     // only encrypt password when it modified
