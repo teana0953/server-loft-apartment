@@ -8,5 +8,4 @@ export interface ISignup extends IMongooseBase {
     photoUrl?: string;
     photoOriginalUrl?: string;
     role: IDB.TUserRole;
-    friends: IDB.IUserFriendInfo[];
 }

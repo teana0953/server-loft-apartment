@@ -320,7 +320,6 @@ async function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
             role: user.role,
-            friends: await user.getFriendInfos(),
         },
     };
 }
