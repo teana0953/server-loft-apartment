@@ -187,7 +187,6 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
-                unique: true,
             },
         },
     ],
@@ -196,7 +195,6 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
-                unique: true,
             },
         },
     ],
@@ -205,7 +203,6 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
-                unique: true,
             },
         },
     ],
