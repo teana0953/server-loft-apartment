@@ -29,18 +29,30 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
         photoUrl = await savePhoto(req.file.buffer, undefined);
     }
 
-    const newUser = await IDB.User.create({
-        name: input.name,
-        email: input.email,
-        password: input.password,
-        passwordConfirm: input.passwordConfirm,
-        photoUrl,
-        photoOriginalUrl,
-        role: input.role,
-        isRegistered: true,
-    });
+    // find not register user
+    let user = await IDB.User.findOne({ email: input.email, isRegistered: false });
+    if (user) {
+        user.password = input.password;
+        user.passwordConfirm = input.passwordConfirm;
+        user.photoUrl = photoUrl;
+        user.photoOriginalUrl = photoOriginalUrl;
+        user.isRegistered = true;
 
-    res.json(await getUserWithCookieToken(newUser, res, req));
+        await user.save();
+    } else {
+        user = await IDB.User.create({
+            name: input.name,
+            email: input.email,
+            password: input.password,
+            passwordConfirm: input.passwordConfirm,
+            photoUrl,
+            photoOriginalUrl,
+            role: input.role,
+            isRegistered: true,
+        });
+    }
+
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
