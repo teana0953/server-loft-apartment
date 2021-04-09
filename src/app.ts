@@ -24,9 +24,11 @@ app.use(Cors());
 
 app.use(Express.static(`${__dirname}/public`));
 
-app.use(BodyParser.json({
-    limit: '100kb'
-}));
+app.use(
+    BodyParser.json({
+        limit: '100kb',
+    }),
+);
 
 app.use(CookieParser());
 
