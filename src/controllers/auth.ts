@@ -37,9 +37,10 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
         photoUrl,
         photoOriginalUrl,
         role: input.role,
+        isRegistered: true,
     });
 
-    res.json(getUserWithCookieToken(newUser, res, req));
+    res.json(await getUserWithCookieToken(newUser, res, req));
 });
 
 /**
@@ -108,12 +109,12 @@ export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSig
         }
     }
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 export const checkAuth = (req: Request, res: Response<IResponseBase>) => {
     res.json({
-        status: 'ok'
+        status: 'ok',
     });
 };
 
@@ -132,7 +133,7 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
         throw new ErrorService.AppError('email or password can not empty', 400);
     }
 
-    const user = await IDB.User.findOne({ email: input.email }).select('+password');
+    const user = await IDB.User.findOne({ email: input.email, isRegistered: true }).select('+password');
     if (!user) {
         throw new ErrorService.AppError(errorMessage, 401);
     }
@@ -142,7 +143,7 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
         throw new ErrorService.AppError(errorMessage, 401);
     }
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -240,7 +241,7 @@ export const resetPassword = ErrorService.catchAsync(async (req: Request<InputRe
     user.passwordResetExpiresTimestamp = undefined;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -261,7 +262,7 @@ export const updatePassword = ErrorService.catchAsync(async (req: Request<InputU
     user.passwordConfirm = input.passwordConfirm;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -280,7 +281,7 @@ function getToken(payload: IDB.IUserJWTPayload): string {
  * @param user
  * @returns
  */
-function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req: Request<any>): OutputUserToken {
+async function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req: Request<any>): Promise<OutputUserToken> {
     const token: string = getToken({
         id: user.id,
     });
@@ -307,6 +308,7 @@ function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req:
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
             role: user.role,
+            friends: await user.getFriendInfos(),
         },
     };
 }

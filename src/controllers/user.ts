@@ -51,6 +51,7 @@ export const updateMe = ErrorService.catchAsync(async (req: Request<InputUpdateM
             role: user.role,
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
+            friends: await user.getFriendInfos(),
         },
     });
 });
@@ -74,7 +75,7 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
  * Add friend
  */
 export type InputAddFriend = IRequest.IUser.IAddFriend;
-export type OutputAddFriend = IResponseBase;
+export type OutputAddFriend = IResponseBase<IResponse.IAuth.ISignup>;
 export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFriend>, res: Response<OutputAddFriend>) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -86,7 +87,7 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
 
     let friend = await IDB.User.findOne({ email: input.email });
     if (!!friend) {
-        if (user.friends.indexOf(friend.id) < 0) {
+        if (user.friends.findIndex((item) => item.id === friend.id) < 0) {
             user.friends.push({
                 id: friend.id,
             });
@@ -105,7 +106,7 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
             },
         ];
 
-        let result = await newUser.save({ validateBeforeSave: false });
+        let result = await newUser.save();
         user.friends.push({
             id: result.id,
         });
@@ -114,5 +115,14 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
 
     res.json({
         status: 'ok',
+        data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
+            friends: await user.getFriendInfos(),
+        },
     });
 });
