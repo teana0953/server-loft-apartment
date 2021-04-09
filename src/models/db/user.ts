@@ -1,11 +1,17 @@
 import { Utility } from '../../helpers';
 import Mongoose, { Model, Document, Schema } from 'mongoose';
+import { ObjectId } from 'mongodb';
 import Validator from 'validator';
 import Bcrypt from 'bcrypt';
 import Crypto from 'crypto';
 
 export interface IUserFriend {
     id: string;
+}
+
+export interface IUserFriendInfo extends IUserFriend {
+    name: string;
+    photoUrl?: string;
 }
 
 export interface IUserGroup {
@@ -181,6 +187,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
+                unique: true,
             },
         },
     ],
@@ -189,6 +196,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
+                unique: true,
             },
         },
     ],
@@ -197,6 +205,7 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
             _id: false,
             id: {
                 type: String,
+                unique: true,
             },
         },
     ],
@@ -206,6 +215,7 @@ export interface UserDocument extends IUser, Document {
     comparePassword(inputPassword: string, userPassword: string): Promise<boolean>;
     isPasswordChanged(jwtTimestamp: number): boolean;
     getPasswordResetToken(): string;
+    getFriendInfos(): Promise<IUserFriendInfo[]>;
 }
 
 export interface UserModel extends Model<UserDocument> {}
@@ -232,6 +242,7 @@ userSchema.pre('save', async function (next) {
     return next();
 });
 
+/// extend methods
 userSchema.methods.comparePassword = async function (inputPassword, userPassword) {
     return await Bcrypt.compare(inputPassword, userPassword);
 };
@@ -256,6 +267,23 @@ userSchema.methods.getPasswordResetToken = function () {
     this.passwordResetExpiresTimestamp = Date.now() + Number(process.env.RESET_PASSWORD_EXPIRES_MIN) * 60 * 1000;
 
     return resetToken;
+};
+
+userSchema.methods.getFriendInfos = async function () {
+    let friendIds: ObjectId[] = this.friends.map((item) => new ObjectId(item.id));
+    let friends = await User.find({
+        _id: {
+            $in: friendIds,
+        },
+    });
+
+    return friends.map((friend) => {
+        return {
+            id: friend.id,
+            name: friend.name,
+            photoUrl: friend.photoUrl,
+        };
+    });
 };
 
 export const User = Mongoose.model<UserDocument, UserModel>('User', userSchema);

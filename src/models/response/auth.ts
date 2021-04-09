@@ -1,5 +1,5 @@
-import { IMongooseBase } from "../base";
-import { IDB } from "../db";
+import { IMongooseBase } from '../base';
+import { IDB } from '../db';
 
 export interface ISignup extends IMongooseBase {
     id: string;
@@ -8,4 +8,5 @@ export interface ISignup extends IMongooseBase {
     photoUrl?: string;
     photoOriginalUrl?: string;
     role: IDB.TUserRole;
+    friends: IDB.IUserFriendInfo[];
 }
