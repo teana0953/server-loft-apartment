@@ -1,7 +1,8 @@
 import e, { Request, Response } from 'express';
-import { IDB, IResponse, IRequest, IResponseBase } from '../models';
-import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper } from '../helpers';
+import { IDB, IResponse, IRequest, IResponseBase, IRequestBase } from '../models';
+import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper, QueryHelper } from '../helpers';
 import { UpdateQuery } from 'mongoose';
+import { ObjectId } from 'mongodb';
 import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 
@@ -52,7 +53,6 @@ export const updateMe = ErrorService.catchAsync(async (req: Request<InputUpdateM
             role: user.role,
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
-            friends: await user.getFriendInfos(),
         },
     });
 });
@@ -76,7 +76,7 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
  * Add friend
  */
 export type InputAddFriend = IRequest.IUser.IAddFriend;
-export type OutputAddFriend = IResponseBase<IResponse.IAuth.ISignup>;
+export type OutputAddFriend = IResponseBase<IResponse.IUser.IFriend>;
 export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFriend>, res: Response<OutputAddFriend>) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -88,20 +88,26 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
 
     let friend = await IDB.User.findOne({ email: input.email });
     if (!!friend) {
-        if (user.friends.findIndex((item) => item.id === friend.id) < 0) {
+        if (!checkFriendIsExist(friend.id, user.friends)) {
             user.friends.push({
                 id: friend.id,
             });
             await user.save({ validateBeforeSave: false });
         }
+
+        if (!checkFriendIsExist(user.id, friend.friends)) {
+            friend.friends.push({
+                id: user.id,
+            });
+        }
     } else {
         // if not exist, create user
-        let newUser = new IDB.User();
-        newUser.name = input.name || input.email.split('@')[0];
-        newUser.email = input.email;
-        newUser.isRegistered = false;
-        newUser.isGoogleAuth = false;
-        newUser.friends = [
+        friend = new IDB.User();
+        friend.name = input.name || input.email.split('@')[0];
+        friend.email = input.email;
+        friend.isRegistered = false;
+        friend.isGoogleAuth = false;
+        friend.friends = [
             {
                 id: user.id,
             },
@@ -116,7 +122,7 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
             `,
         });
 
-        let result = await newUser.save();
+        let result = await friend.save();
         user.friends.push({
             id: result.id,
         });
@@ -126,13 +132,55 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
     res.json({
         status: 'ok',
         data: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            photoUrl: user.photoUrl,
-            photoOriginalUrl: user.photoOriginalUrl,
-            friends: await user.getFriendInfos(),
+            id: friend.id,
+            name: friend.name,
+            email: friend.email,
+            photoUrl: friend.photoUrl,
         },
     });
 });
+
+/**
+ * Get friend
+ */
+export type InputGetFriend = IRequestBase;
+export type OutputGetFriend = IResponseBase<IResponse.IUser.IFriend[]>;
+export const getFriends = ErrorService.catchAsync(async (req: Request<InputGetFriend>, res: Response<OutputGetFriend>) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    let input: InputGetFriend = req.params;
+    let user = req.user;
+    let friendIds = user.friends.map((item) => new ObjectId(item.id));
+
+    let oriQuery = IDB.User.find({ _id: { $in: friendIds } });
+    let queryService = await new QueryHelper<IDB.UserDocument[], IDB.UserDocument>(IDB.User.find({ _id: { $in: friendIds } }), req.query);
+    let total: number = await oriQuery.countDocuments();
+
+    queryService = queryService //
+        .sort()
+        .paginate();
+
+    let result = await queryService.query;
+
+    res.json({
+        status: 'ok',
+        total: total,
+        page: queryService.page,
+        limit: queryService.limit,
+        data: result.map((item) => {
+            return {
+                id: item.id,
+                name: item.name,
+                email: item.email,
+                photoUrl: item.photoUrl,
+            };
+        }),
+    });
+});
+
+function checkFriendIsExist(userId: string, friends: IDB.IUserFriend[]): boolean {
+    return friends.findIndex((item) => item.id === userId) > -1;
+}

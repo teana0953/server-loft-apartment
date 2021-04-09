@@ -2,11 +2,12 @@ import express from 'express';
 import BodyParser from 'body-parser';
 import { Middleware } from '../middlewares';
 import { UserController } from '../controllers';
-import { IRequest } from '../models';
+import { IRequest, validateRequestBase } from '../models';
 
 export const UserApi = express.Router();
 
-UserApi.route(`/user/update-me`).put(
+UserApi.put(
+    `/user/update-me`,
     Middleware.checkAuth,
     BodyParser.json({
         limit: '10mb',
@@ -14,5 +15,8 @@ UserApi.route(`/user/update-me`).put(
     Middleware.uploadSinglePhoto('photo'),
     UserController.updateMe,
 );
+
+/// friends
+UserApi.get('/user/friends', Middleware.checkAuth, validateRequestBase, UserController.getFriends);
 
 UserApi.put('/user/add-friend', Middleware.checkAuth, IRequest.IUser.validateAddFriend, UserController.addFriend);

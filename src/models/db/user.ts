@@ -11,6 +11,7 @@ export interface IUserFriend {
 
 export interface IUserFriendInfo extends IUserFriend {
     name: string;
+    email: string;
     photoUrl?: string;
 }
 
@@ -278,6 +279,7 @@ userSchema.methods.getFriendInfos = async function () {
         return {
             id: friend.id,
             name: friend.name,
+            email: friend.email,
             photoUrl: friend.photoUrl,
         };
     });
