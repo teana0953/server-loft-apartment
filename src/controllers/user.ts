@@ -3,6 +3,7 @@ import { IDB, IResponse, IRequest, IResponseBase } from '../models';
 import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper } from '../helpers';
 import { UpdateQuery } from 'mongoose';
 import { validationResult } from 'express-validator';
+import ActionEmail from '../action/email';
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -105,6 +106,15 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
                 id: user.id,
             },
         ];
+
+        // TODO send invited email
+        ActionEmail.action$.next({
+            to: [input.email],
+            subject: '<No Reply> Invite you to join loft-apartment',
+            html: `
+            <h1>Welcome to join loft-apartment</h1>
+            `,
+        });
 
         let result = await newUser.save();
         user.friends.push({
