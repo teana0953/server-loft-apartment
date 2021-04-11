@@ -113,7 +113,7 @@ export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSig
 
 export const checkAuth = (req: Request, res: Response<IResponseBase>) => {
     res.json({
-        status: 'ok'
+        status: 'ok',
     });
 };
 
@@ -300,6 +300,7 @@ function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req:
 
     return {
         status: 'ok',
+        token: token,
         data: {
             id: user.id,
             name: user.name,
