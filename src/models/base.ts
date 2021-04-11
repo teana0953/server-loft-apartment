@@ -13,6 +13,7 @@ export interface IMongooseBase {
 
 export interface IResponseBase<T = {}> {
     status: 'ok' | 'error';
+    token?: string;
     data?: T;
     total?: number;
     page?: number;

@@ -313,6 +313,7 @@ async function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>
 
     return {
         status: 'ok',
+        token: token,
         data: {
             id: user.id,
             name: user.name,
