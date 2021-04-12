@@ -100,6 +100,11 @@ export interface IUser {
     /**
      *
      */
+    inviteToken?: string;
+
+    /**
+     *
+     */
     friends: IUserFriend[];
 
     /**

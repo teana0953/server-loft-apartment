@@ -1,10 +1,12 @@
-import e, { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { IDB, IResponse, IRequest, IResponseBase, IRequestBase } from '../models';
 import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper, QueryHelper } from '../helpers';
 import { UpdateQuery } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
+import Bcrypt from 'bcrypt';
+import Crypto from 'crypto';
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -114,11 +116,20 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
         ];
 
         // TODO send invited email
+        let token = Crypto.randomBytes(32).toString('hex');
+
+        let userToken = Crypto.createHash('sha256') //
+            .update(token)
+            .digest('hex');
+        friend.inviteToken = userToken;
+
+        const inviteUrl: string = `${req.get('Origin')}/signup/${token}`;
         ActionEmail.action$.next({
             to: [input.email],
             subject: '<No Reply> Invite you to join loft-apartment',
             html: `
             <h1>Welcome to join loft-apartment</h1>
+            <a href="${inviteUrl}">${inviteUrl}</a>
             `,
         });
 
