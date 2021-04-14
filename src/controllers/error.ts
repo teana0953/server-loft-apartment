@@ -35,6 +35,12 @@ export function handleGlobalError(err, req, res: Response, next) {
 
         sendErrorProd(error, res);
     } else {
+        if (err.name === 'JsonWebTokenError') {
+            err = handleJWTError();
+        }
+        if (err.name === 'TokenExpiredError') {
+            err = handleJWTExpiredError();
+        }
         sendErrorDev(err, res);
     }
 }

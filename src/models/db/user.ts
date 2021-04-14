@@ -188,6 +188,10 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
         type: Number,
     },
 
+    inviteToken: {
+        type: String,
+    },
+
     friends: [
         {
             _id: false,

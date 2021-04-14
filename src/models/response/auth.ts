@@ -9,3 +9,9 @@ export interface ISignup extends IMongooseBase {
     photoOriginalUrl?: string;
     role: IDB.TUserRole;
 }
+
+export interface ISignupWithToken {
+    id: string;
+    name: string;
+    email: string;
+}

@@ -2,8 +2,11 @@ import express from 'express';
 import BodyParser from 'body-parser';
 import { AuthController } from '../controllers';
 import { Middleware } from '../middlewares';
+import { IRequest } from '../models';
 
 export const AuthApi = express.Router();
+
+AuthApi.route(`/signup/:token`).get(IRequest.IAuth.validateSignupWithToken, AuthController.signupWithToken);
 
 AuthApi.route(`/signup`).post(
     BodyParser.json({

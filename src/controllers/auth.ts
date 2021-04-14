@@ -37,6 +37,7 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
         user.photoUrl = photoUrl;
         user.photoOriginalUrl = photoOriginalUrl;
         user.isRegistered = true;
+        user.inviteToken = undefined;
 
         await user.save();
     } else {
@@ -53,6 +54,30 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
+});
+
+/**
+ * Sign up with token
+ */
+export type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
+export type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
+export const signupWithToken = ErrorService.catchAsync(async (req: Request<InputSignupWithToken>, res: Response<OutputSignupWithToken>) => {
+    let input: InputSignupWithToken = req.params;
+    console.log(req.params);
+
+    // find not register user
+    const hashedToken: string = Crypto.createHash('sha256').update(input.token).digest('hex');
+
+    let user = await IDB.User.findOne({ inviteToken: hashedToken, isRegistered: false });
+    if (user) {
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        });
+    } else {
+        throw new ErrorService.AppError(`token invalid`, 400);
+    }
 });
 
 /**
@@ -117,6 +142,7 @@ export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSig
         if (user.isGoogleAuth === false || user.isRegistered === false) {
             user.isRegistered = true;
             user.isGoogleAuth = true;
+            user.inviteToken = undefined;
             await user.save();
         }
     }
