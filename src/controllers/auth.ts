@@ -63,7 +63,6 @@ export type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
 export type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
 export const signupWithToken = ErrorService.catchAsync(async (req: Request<InputSignupWithToken>, res: Response<OutputSignupWithToken>) => {
     let input: InputSignupWithToken = req.params;
-    console.log(req.params);
 
     // find not register user
     const hashedToken: string = Crypto.createHash('sha256').update(input.token).digest('hex');
