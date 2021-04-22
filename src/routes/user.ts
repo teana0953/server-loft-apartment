@@ -6,8 +6,7 @@ import { IRequest, validateRequestBase } from '../models';
 
 export const UserApi = express.Router();
 
-UserApi.put(
-    `/user/update-me`,
+UserApi.route(`/user/update-me`).put(
     Middleware.checkAuth,
     BodyParser.json({
         limit: '10mb',
@@ -17,6 +16,6 @@ UserApi.put(
 );
 
 /// friends
-UserApi.get('/user/friends', Middleware.checkAuth, validateRequestBase, UserController.getFriends);
+UserApi.route('/user/friends').get(Middleware.checkAuth, validateRequestBase, UserController.getFriends);
 
-UserApi.put('/user/add-friend', Middleware.checkAuth, IRequest.IUser.validateAddFriend, UserController.addFriend);
+UserApi.route('/user/add-friend').put(Middleware.checkAuth, IRequest.IUser.validateAddFriend, UserController.addFriend);
