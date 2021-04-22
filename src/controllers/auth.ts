@@ -1,3 +1,4 @@
+import { Controller } from '.';
 import { IDB, IRequest, IResponse, IResponseBase } from '../models';
 import { EmailService, ErrorService, GoogleAuthService, PhotoHelper } from '../helpers';
 import { Request, Response } from 'express';
@@ -13,8 +14,8 @@ export type OutputUserToken = IResponseBase<IResponse.IAuth.ISignup>;
  */
 export type InputSignup = IRequest.IAuth.ISignup;
 export type OutputSignup = OutputUserToken;
-export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, res: Response<OutputSignup>) => {
-    let input: InputSignup = req.body;
+export const signup = new Controller<InputSignup, OutputSignup>(async (req, res) => {
+    let input = req.body;
 
     let photoOriginalUrl: string = undefined;
     let photoUrl: string = undefined;
@@ -54,15 +55,15 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-});
+}).exec;
 
 /**
  * Sign up with token
  */
 export type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
 export type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
-export const signupWithToken = ErrorService.catchAsync(async (req: Request<InputSignupWithToken>, res: Response<OutputSignupWithToken>) => {
-    let input: InputSignupWithToken = req.params;
+export const signupWithToken = new Controller<InputSignupWithToken, OutputSignupWithToken>(async (req, res) => {
+    let input = req.params;
 
     // find not register user
     const hashedToken: string = Crypto.createHash('sha256').update(input.token).digest('hex');
@@ -77,7 +78,7 @@ export const signupWithToken = ErrorService.catchAsync(async (req: Request<Input
     } else {
         throw new ErrorService.AppError(`token invalid`, 400);
     }
-});
+}).exec;
 
 /**
  * Sign up Google
@@ -85,8 +86,8 @@ export const signupWithToken = ErrorService.catchAsync(async (req: Request<Input
  */
 export type InputSignupGoogle = IRequest.IAuth.ISignupGoogle;
 export type OutputSignupGoogle = OutputUserToken;
-export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSignupGoogle>, res: Response<OutputSignupGoogle>) => {
-    let input: InputSignupGoogle = req.body;
+export const signupGoogle = new Controller<InputSignupGoogle, OutputSignupGoogle>(async (req, res) => {
+    let input = req.body;
 
     if (!input.googleIdToken) {
         throw new ErrorService.AppError('googleIdToken can not empty', 400);
@@ -147,21 +148,24 @@ export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSig
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-});
+}).exec;
 
-export const checkAuth = (req: Request, res: Response<IResponseBase>) => {
+/**
+ * checkAuth
+ */
+export const checkAuth = new Controller<any, IResponseBase>(async (req, res) => {
     res.json({
         status: 'ok',
     });
-};
+}).exec;
 
 /**
  * Login
  */
 export type InputLogin = IRequest.IAuth.ILogin;
 export type OutputLogin = OutputUserToken;
-export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, res: Response<OutputLogin>) => {
-    let input: InputLogin = req.body;
+export const login = new Controller<InputLogin, OutputLogin>(async (req, res) => {
+    let input = req.body;
 
     const errorMessage: string = 'invalid email or password';
     const { email, password } = input;
@@ -181,13 +185,13 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-});
+}).exec;
 
 /**
  * Logout
  */
 export type OutputLogout = Date;
-export const logout = ErrorService.catchAsync(async (req: Request, res: Response<OutputLogout>) => {
+export const logout = new Controller<any, OutputLogout>(async (req, res) => {
     const user = await IDB.User.findById(req.user?.id);
     if (!user) {
         throw new ErrorService.AppError('invalid', 401);
@@ -196,15 +200,15 @@ export const logout = ErrorService.catchAsync(async (req: Request, res: Response
     res.cookie('token', null, { expires: new Date() });
 
     res.send(new Date());
-});
+}).exec;
 
 /**
  * Forgot password
  */
 export type InputForgotPassword = IRequest.IAuth.IForgotPassword;
 export type OutputForgotPassword = IResponseBase;
-export const forgotPassword = ErrorService.catchAsync(async (req: Request<InputForgotPassword>, res: Response<OutputForgotPassword>) => {
-    let input: InputForgotPassword = req.body;
+export const forgotPassword = new Controller<InputForgotPassword, OutputForgotPassword>(async (req, res) => {
+    let input = req.body;
 
     const { email } = input;
 
@@ -244,15 +248,15 @@ export const forgotPassword = ErrorService.catchAsync(async (req: Request<InputF
 
         throw new ErrorService.AppError('there was an error sending the email.', 500);
     }
-});
+}).exec;
 
 /**
  * Reset password
  */
 export type InputResetPassword = IRequest.IAuth.IResetPassword;
 export type OutputResetPassword = OutputUserToken;
-export const resetPassword = ErrorService.catchAsync(async (req: Request<InputResetPassword>, res: Response<OutputResetPassword>) => {
-    let input: InputResetPassword = req.body;
+export const resetPassword = new Controller<InputResetPassword, OutputResetPassword>(async (req, res) => {
+    let input = req.body;
     input.token = req.params?.token;
 
     if (!input.token) {
@@ -279,15 +283,15 @@ export const resetPassword = ErrorService.catchAsync(async (req: Request<InputRe
     await user.save();
 
     res.json(await getUserWithCookieToken(user, res, req));
-});
+}).exec;
 
 /**
  * Update password
  */
 export type InputUpdatePassword = IRequest.IAuth.IUpdatePassword;
 export type OutputUpdatePassword = OutputUserToken;
-export const updatePassword = ErrorService.catchAsync(async (req: Request<InputUpdatePassword>, res: Response<OutputUpdatePassword>) => {
-    let input: InputUpdatePassword = req.body;
+export const updatePassword = new Controller<InputUpdatePassword, OutputUpdatePassword>(async (req, res) => {
+    let input = req.body;
 
     const user = await IDB.User.findById(req.user?.id).select('+password');
 
@@ -300,7 +304,7 @@ export const updatePassword = ErrorService.catchAsync(async (req: Request<InputU
     await user.save();
 
     res.json(await getUserWithCookieToken(user, res, req));
-});
+}).exec;
 
 /**
  * Get token
