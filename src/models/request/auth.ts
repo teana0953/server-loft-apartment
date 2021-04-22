@@ -1,4 +1,5 @@
-import { IDB } from "..";
+import { checkSchema } from 'express-validator';
+import { IDB, TValidatorSchema } from '..';
 
 export interface ISignup {
     name: string;
@@ -8,6 +9,22 @@ export interface ISignup {
     passwordConfirm: string;
     role?: IDB.TUserRole;
 }
+
+export interface ISignupWithToken {
+    token: string;
+}
+let signupWithToken: TValidatorSchema<ISignupWithToken> = {
+    token: {
+        in: ['params'],
+        exists: {
+            options: {
+                checkNull: true,
+            },
+        },
+        errorMessage: 'token is required',
+    },
+};
+export const validateSignupWithToken = checkSchema(signupWithToken);
 
 export interface ISignupGoogle {
     googleIdToken: string;

@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { Result, ValidationError } from 'express-validator';
 import { Error } from 'mongoose';
 import { ErrorService } from '../helpers';
 
@@ -19,18 +20,27 @@ export function handleGlobalError(err, req, res: Response, next) {
         if (err.name === 'MongoError' || err instanceof Error) {
             error = handleMongooseError(err);
         }
-        if (error.name === 'JsonWebTokenError') {
+        if (err.name === 'JsonWebTokenError') {
             error = handleJWTError();
         }
-        if (error.name === 'TokenExpiredError') {
+        if (err.name === 'TokenExpiredError') {
             error = handleJWTExpiredError();
         }
-        if (error.name === 'MulterError') {
+        if (err.name === 'MulterError') {
             error = handleMulterError(error);
+        }
+        if (typeof err.isEmpty === 'function') {
+            error = handleValidationError(err);
         }
 
         sendErrorProd(error, res);
     } else {
+        if (err.name === 'JsonWebTokenError') {
+            err = handleJWTError();
+        }
+        if (err.name === 'TokenExpiredError') {
+            err = handleJWTExpiredError();
+        }
         sendErrorDev(err, res);
     }
 }
@@ -54,6 +64,16 @@ function handleJWTExpiredError() {
 
 function handleMulterError(err: Error) {
     return new ErrorService.AppError(`file-handle: ${err.message}`, 400);
+}
+
+function handleValidationError(err: Result<ValidationError>) {
+    return new ErrorService.AppError(
+        err
+            .array()
+            .map((item) => item.msg)
+            .join('; '),
+        400,
+    );
 }
 
 /**

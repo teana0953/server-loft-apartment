@@ -4,6 +4,8 @@ import * as http from 'http';
 import { app } from './app';
 import { Utility, MongoDBService } from './helpers';
 
+import './action';
+
 process.on('uncaughtException', async (err) => {
     let error: Error = err as any;
     console.log(error.name, error.message);
@@ -44,4 +46,3 @@ process.on('unhandledRejection', async (err) => {
     }
     Utility.killServer();
 });
-

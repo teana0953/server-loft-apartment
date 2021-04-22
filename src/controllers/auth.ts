@@ -29,17 +29,54 @@ export const signup = ErrorService.catchAsync(async (req: Request<InputSignup>, 
         photoUrl = await savePhoto(req.file.buffer, undefined);
     }
 
-    const newUser = await IDB.User.create({
-        name: input.name,
-        email: input.email,
-        password: input.password,
-        passwordConfirm: input.passwordConfirm,
-        photoUrl,
-        photoOriginalUrl,
-        role: input.role,
-    });
+    // find not register user
+    let user = await IDB.User.findOne({ email: input.email, isRegistered: false });
+    if (user) {
+        user.password = input.password;
+        user.passwordConfirm = input.passwordConfirm;
+        user.photoUrl = photoUrl;
+        user.photoOriginalUrl = photoOriginalUrl;
+        user.isRegistered = true;
+        user.inviteToken = undefined;
 
-    res.json(getUserWithCookieToken(newUser, res, req));
+        await user.save();
+    } else {
+        user = await IDB.User.create({
+            name: input.name,
+            email: input.email,
+            password: input.password,
+            passwordConfirm: input.passwordConfirm,
+            photoUrl,
+            photoOriginalUrl,
+            role: input.role,
+            isRegistered: true,
+        });
+    }
+
+    res.json(await getUserWithCookieToken(user, res, req));
+});
+
+/**
+ * Sign up with token
+ */
+export type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
+export type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
+export const signupWithToken = ErrorService.catchAsync(async (req: Request<InputSignupWithToken>, res: Response<OutputSignupWithToken>) => {
+    let input: InputSignupWithToken = req.params;
+
+    // find not register user
+    const hashedToken: string = Crypto.createHash('sha256').update(input.token).digest('hex');
+
+    let user = await IDB.User.findOne({ inviteToken: hashedToken, isRegistered: false });
+    if (user) {
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        });
+    } else {
+        throw new ErrorService.AppError(`token invalid`, 400);
+    }
 });
 
 /**
@@ -104,11 +141,12 @@ export const signupGoogle = ErrorService.catchAsync(async (req: Request<InputSig
         if (user.isGoogleAuth === false || user.isRegistered === false) {
             user.isRegistered = true;
             user.isGoogleAuth = true;
+            user.inviteToken = undefined;
             await user.save();
         }
     }
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 export const checkAuth = (req: Request, res: Response<IResponseBase>) => {
@@ -132,7 +170,7 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
         throw new ErrorService.AppError('email or password can not empty', 400);
     }
 
-    const user = await IDB.User.findOne({ email: input.email }).select('+password');
+    const user = await IDB.User.findOne({ email: input.email, isRegistered: true }).select('+password');
     if (!user) {
         throw new ErrorService.AppError(errorMessage, 401);
     }
@@ -142,7 +180,7 @@ export const login = ErrorService.catchAsync(async (req: Request<InputLogin>, re
         throw new ErrorService.AppError(errorMessage, 401);
     }
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -240,7 +278,7 @@ export const resetPassword = ErrorService.catchAsync(async (req: Request<InputRe
     user.passwordResetExpiresTimestamp = undefined;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -261,7 +299,7 @@ export const updatePassword = ErrorService.catchAsync(async (req: Request<InputU
     user.passwordConfirm = input.passwordConfirm;
     await user.save();
 
-    res.json(getUserWithCookieToken(user, res, req));
+    res.json(await getUserWithCookieToken(user, res, req));
 });
 
 /**
@@ -280,7 +318,7 @@ function getToken(payload: IDB.IUserJWTPayload): string {
  * @param user
  * @returns
  */
-function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req: Request<any>): OutputUserToken {
+async function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>, req: Request<any>): Promise<OutputUserToken> {
     const token: string = getToken({
         id: user.id,
     });

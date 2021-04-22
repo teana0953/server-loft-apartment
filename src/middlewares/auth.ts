@@ -13,6 +13,7 @@ import JWT from 'jsonwebtoken';
 export const checkAuth = ErrorService.catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // check token is exist
     let token: string = undefined;
+
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
     } else if (req.cookies.token) {
