@@ -3,4 +3,8 @@ import { ServerController } from '../../src/controllers';
 
 export const ServerApi = express.Router();
 
-ServerApi.route(`/about`).get(ServerController.getServerInfo);
+enum ERoute {
+    getServerInfo = '/about',
+}
+
+ServerApi.route(ERoute.getServerInfo).get(ServerController.getServerInfo);

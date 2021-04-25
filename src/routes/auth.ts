@@ -6,9 +6,21 @@ import { IRequest } from '../models';
 
 export const AuthApi = express.Router();
 
-AuthApi.route(`/signup/:token`).get(IRequest.IAuth.validateSignupWithToken, AuthController.signupWithToken);
+enum ERoute {
+    signupWithToken = '/signup/:token',
+    signup = '/signup',
+    signupGoogle = '/signup-google',
+    checkAuth = '/check-auth',
+    login = '/login',
+    logout = '/logout',
+    forgotPassword = '/forgot-password',
+    resetPassword = '/reset-password/:token',
+    updateMyPassword = '/update-my-password',
+}
 
-AuthApi.route(`/signup`).post(
+AuthApi.route(ERoute.signupWithToken).get(IRequest.IAuth.validateSignupWithToken, AuthController.signupWithToken);
+
+AuthApi.route(ERoute.signup).post(
     BodyParser.json({
         limit: '10mb',
     }),
@@ -16,16 +28,16 @@ AuthApi.route(`/signup`).post(
     AuthController.signup,
 );
 
-AuthApi.route(`/signup-google`).post(AuthController.signupGoogle);
+AuthApi.route(ERoute.signupGoogle).post(AuthController.signupGoogle);
 
-AuthApi.route('/check-auth').get(Middleware.checkAuth, AuthController.checkAuth);
+AuthApi.route(ERoute.checkAuth).get(Middleware.checkAuth, AuthController.checkAuth);
 
-AuthApi.route(`/login`).post(AuthController.login);
+AuthApi.route(ERoute.login).post(AuthController.login);
 
-AuthApi.route(`/logout`).get(Middleware.checkAuth, AuthController.logout);
+AuthApi.route(ERoute.logout).get(Middleware.checkAuth, AuthController.logout);
 
-AuthApi.route(`/forgot-password`).post(AuthController.forgotPassword);
+AuthApi.route(ERoute.forgotPassword).post(AuthController.forgotPassword);
 
-AuthApi.route(`/reset-password/:token`).put(AuthController.resetPassword);
+AuthApi.route(ERoute.resetPassword).put(AuthController.resetPassword);
 
-AuthApi.route(`/update-my-password`).put(Middleware.checkAuth, AuthController.updatePassword);
+AuthApi.route(ERoute.updateMyPassword).put(Middleware.checkAuth, AuthController.updatePassword);

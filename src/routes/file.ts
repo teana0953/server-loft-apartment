@@ -4,4 +4,8 @@ import { FileController } from '../../src/controllers';
 
 export const FileApi = express.Router();
 
-FileApi.route(`/file/:routing/:id`).get(FileController.getFile);
+enum ERoute {
+    getFile = '/file/:routing/:id',
+}
+
+FileApi.route(ERoute.getFile).get(FileController.getFile);
