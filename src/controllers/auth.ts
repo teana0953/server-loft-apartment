@@ -9,12 +9,14 @@ import { LoginTicket } from 'google-auth-library';
 
 export type OutputUserToken = IResponseBase<IResponse.IAuth.ISignup>;
 
+export { signup, signupWithToken, signupGoogle, checkAuth, login, logout, forgotPassword, resetPassword, updatePassword };
+
 /**
  * Sign up
  */
-export type InputSignup = IRequest.IAuth.ISignup;
-export type OutputSignup = OutputUserToken;
-export const signup = new Controller<InputSignup, OutputSignup>(async (req, res) => {
+type InputSignup = IRequest.IAuth.ISignup;
+type OutputSignup = OutputUserToken;
+const signup = new Controller<InputSignup, OutputSignup>(async (req, res) => {
     let input = req.body;
 
     let photoOriginalUrl: string = undefined;
@@ -60,9 +62,9 @@ export const signup = new Controller<InputSignup, OutputSignup>(async (req, res)
 /**
  * Sign up with token
  */
-export type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
-export type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
-export const signupWithToken = new Controller<InputSignupWithToken, OutputSignupWithToken>(async (req, res) => {
+type InputSignupWithToken = IRequest.IAuth.ISignupWithToken;
+type OutputSignupWithToken = IResponse.IAuth.ISignupWithToken;
+const signupWithToken = new Controller<InputSignupWithToken, OutputSignupWithToken>(async (req, res) => {
     let input = req.params;
 
     // find not register user
@@ -84,9 +86,9 @@ export const signupWithToken = new Controller<InputSignupWithToken, OutputSignup
  * Sign up Google
  * @description if already exist, will login
  */
-export type InputSignupGoogle = IRequest.IAuth.ISignupGoogle;
-export type OutputSignupGoogle = OutputUserToken;
-export const signupGoogle = new Controller<InputSignupGoogle, OutputSignupGoogle>(async (req, res) => {
+type InputSignupGoogle = IRequest.IAuth.ISignupGoogle;
+type OutputSignupGoogle = OutputUserToken;
+const signupGoogle = new Controller<InputSignupGoogle, OutputSignupGoogle>(async (req, res) => {
     let input = req.body;
 
     if (!input.googleIdToken) {
@@ -153,7 +155,7 @@ export const signupGoogle = new Controller<InputSignupGoogle, OutputSignupGoogle
 /**
  * checkAuth
  */
-export const checkAuth = new Controller<any, IResponseBase>(async (req, res) => {
+const checkAuth = new Controller<any, IResponseBase>(async (req, res) => {
     res.json({
         status: 'ok',
     });
@@ -162,9 +164,9 @@ export const checkAuth = new Controller<any, IResponseBase>(async (req, res) => 
 /**
  * Login
  */
-export type InputLogin = IRequest.IAuth.ILogin;
-export type OutputLogin = OutputUserToken;
-export const login = new Controller<InputLogin, OutputLogin>(async (req, res) => {
+type InputLogin = IRequest.IAuth.ILogin;
+type OutputLogin = OutputUserToken;
+const login = new Controller<InputLogin, OutputLogin>(async (req, res) => {
     let input = req.body;
 
     const errorMessage: string = 'invalid email or password';
@@ -190,9 +192,9 @@ export const login = new Controller<InputLogin, OutputLogin>(async (req, res) =>
 /**
  * Logout
  */
-export type OutputLogout = Date;
-export const logout = new Controller<any, OutputLogout>(async (req, res) => {
-    const user = await IDB.User.findById(req.user ?.id);
+type OutputLogout = Date;
+const logout = new Controller<any, OutputLogout>(async (req, res) => {
+    const user = await IDB.User.findById(req.user?.id);
     if (!user) {
         throw new ErrorService.AppError('invalid', 401);
     }
@@ -205,9 +207,9 @@ export const logout = new Controller<any, OutputLogout>(async (req, res) => {
 /**
  * Forgot password
  */
-export type InputForgotPassword = IRequest.IAuth.IForgotPassword;
-export type OutputForgotPassword = IResponseBase;
-export const forgotPassword = new Controller<InputForgotPassword, OutputForgotPassword>(async (req, res) => {
+type InputForgotPassword = IRequest.IAuth.IForgotPassword;
+type OutputForgotPassword = IResponseBase;
+const forgotPassword = new Controller<InputForgotPassword, OutputForgotPassword>(async (req, res) => {
     let input = req.body;
 
     const { email } = input;
@@ -253,11 +255,11 @@ export const forgotPassword = new Controller<InputForgotPassword, OutputForgotPa
 /**
  * Reset password
  */
-export type InputResetPassword = IRequest.IAuth.IResetPassword;
-export type OutputResetPassword = OutputUserToken;
-export const resetPassword = new Controller<InputResetPassword, OutputResetPassword>(async (req, res) => {
+type InputResetPassword = IRequest.IAuth.IResetPassword;
+type OutputResetPassword = OutputUserToken;
+const resetPassword = new Controller<InputResetPassword, OutputResetPassword>(async (req, res) => {
     let input = req.body;
-    input.token = req.params ?.token;
+    input.token = req.params?.token;
 
     if (!input.token) {
         throw new ErrorService.AppError('token can not empty', 400);
@@ -288,12 +290,12 @@ export const resetPassword = new Controller<InputResetPassword, OutputResetPassw
 /**
  * Update password
  */
-export type InputUpdatePassword = IRequest.IAuth.IUpdatePassword;
-export type OutputUpdatePassword = OutputUserToken;
-export const updatePassword = new Controller<InputUpdatePassword, OutputUpdatePassword>(async (req, res) => {
+type InputUpdatePassword = IRequest.IAuth.IUpdatePassword;
+type OutputUpdatePassword = OutputUserToken;
+const updatePassword = new Controller<InputUpdatePassword, OutputUpdatePassword>(async (req, res) => {
     let input = req.body;
 
-    const user = await IDB.User.findById(req.user ?.id).select('+password');
+    const user = await IDB.User.findById(req.user?.id).select('+password');
 
     if (!(await user.comparePassword(input.passwordCurrent, user.password))) {
         throw new ErrorService.AppError('your current password is wrong', 401);

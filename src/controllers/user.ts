@@ -8,6 +8,8 @@ import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 import Crypto from 'crypto';
 
+export { updateMe, addFriend, getFriends };
+
 const UserPhotoCollectionName = 'FileUserPhoto';
 
 /**
@@ -15,7 +17,7 @@ const UserPhotoCollectionName = 'FileUserPhoto';
  */
 export type InputUpdateMe = IRequest.IUser.IUserMe;
 export type OutputUpdateMe = IResponseBase<IResponse.IAuth.ISignup>;
-export const updateMe = new Controller<InputUpdateMe, OutputUpdateMe>(async (req, res) => {
+const updateMe = new Controller<InputUpdateMe, OutputUpdateMe>(async (req, res) => {
     let input = req.body;
 
     let updateQuery: UpdateQuery<IDB.UserDocument> = {
@@ -77,9 +79,9 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
 /**
  * Add friend
  */
-export type InputAddFriend = IRequest.IUser.IAddFriend;
-export type OutputAddFriend = IResponseBase<IResponse.IUser.IFriend>;
-export const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, res) => {
+type InputAddFriend = IRequest.IUser.IAddFriend;
+type OutputAddFriend = IResponseBase<IResponse.IUser.IFriend>;
+const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw errors;
@@ -154,9 +156,9 @@ export const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (
 /**
  * Get friend
  */
-export type InputGetFriend = IRequestBase;
-export type OutputGetFriend = IResponseBase<IResponse.IUser.IFriend[]>;
-export const getFriends = new Controller<InputGetFriend, OutputGetFriend>(async (req, res) => {
+type InputGetFriend = IRequestBase;
+type OutputGetFriend = IResponseBase<IResponse.IUser.IFriend[]>;
+const getFriends = new Controller<InputGetFriend, OutputGetFriend>(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw errors;
