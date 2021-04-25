@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
+import { Controller } from '.';
 import { IDB, IResponse, IRequest, IResponseBase, IRequestBase } from '../models';
-import { ErrorService, FileMongoHelper, MongoDBService, PhotoHelper, QueryHelper } from '../helpers';
+import { ErrorService, FileMongoHelper, PhotoHelper, QueryHelper } from '../helpers';
 import { UpdateQuery } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
-import Bcrypt from 'bcrypt';
 import Crypto from 'crypto';
 
 const UserPhotoCollectionName = 'FileUserPhoto';
@@ -15,8 +15,8 @@ const UserPhotoCollectionName = 'FileUserPhoto';
  */
 export type InputUpdateMe = IRequest.IUser.IUserMe;
 export type OutputUpdateMe = IResponseBase<IResponse.IAuth.ISignup>;
-export const updateMe = ErrorService.catchAsync(async (req: Request<InputUpdateMe>, res: Response<OutputUpdateMe>) => {
-    let input: InputUpdateMe = req.body;
+export const updateMe = new Controller<InputUpdateMe, OutputUpdateMe>(async (req, res) => {
+    let input = req.body;
 
     let updateQuery: UpdateQuery<IDB.UserDocument> = {
         name: input.name,
@@ -57,7 +57,7 @@ export const updateMe = ErrorService.catchAsync(async (req: Request<InputUpdateM
             photoOriginalUrl: user.photoOriginalUrl,
         },
     });
-});
+}).func;
 
 /**
  * save photo
@@ -79,13 +79,13 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
  */
 export type InputAddFriend = IRequest.IUser.IAddFriend;
 export type OutputAddFriend = IResponseBase<IResponse.IUser.IFriend>;
-export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFriend>, res: Response<OutputAddFriend>) => {
+export const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw errors;
     }
 
-    let input: InputAddFriend = req.body;
+    let input = req.body;
     let user = req.user;
 
     let friend = await IDB.User.findOne({ email: input.email });
@@ -149,20 +149,20 @@ export const addFriend = ErrorService.catchAsync(async (req: Request<InputAddFri
             photoUrl: friend.photoUrl,
         },
     });
-});
+}).func;
 
 /**
  * Get friend
  */
 export type InputGetFriend = IRequestBase;
 export type OutputGetFriend = IResponseBase<IResponse.IUser.IFriend[]>;
-export const getFriends = ErrorService.catchAsync(async (req: Request<InputGetFriend>, res: Response<OutputGetFriend>) => {
+export const getFriends = new Controller<InputGetFriend, OutputGetFriend>(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw errors;
     }
 
-    let input: InputGetFriend = req.params;
+    let input = req.params;
     let user = req.user;
     let friendIds = user.friends.map((item) => new ObjectId(item.id));
 
@@ -190,8 +190,14 @@ export const getFriends = ErrorService.catchAsync(async (req: Request<InputGetFr
             };
         }),
     });
-});
+}).func;
 
+/**
+ * check friend is exist
+ * @param userId
+ * @param friends
+ * @returns
+ */
 function checkFriendIsExist(userId: string, friends: IDB.IUserFriend[]): boolean {
     return friends.findIndex((item) => item.id === userId) > -1;
 }

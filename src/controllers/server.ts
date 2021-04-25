@@ -1,16 +1,16 @@
 import { Response, Request } from 'express';
 import Package from '../../package.json';
-import { IServerInfo } from '../../src/models';
-import { ErrorService } from '../helpers';
+import { Controller } from '.';
+import { IServerInfo } from '../models';
 
 /**
  * get server info
  */
 type OutputServerInfo = IServerInfo;
-export const getServerInfo = ErrorService.catchAsync(async (req: Request, res: Response<OutputServerInfo>) => {
+export const getServerInfo = new Controller<any, OutputServerInfo>(async (req, res) => {
     res.json({
         name: Package.projectName,
         version: Package.version,
         serverTime: new Date(),
     });
-});
+}).func;
