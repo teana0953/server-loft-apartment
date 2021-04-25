@@ -1,10 +1,10 @@
-import { query, Request, Response } from 'express';
-import { ObjectId } from 'mongodb';
+import { Request, Response } from 'express';
+import { Controller } from '.';
 import FileType from 'file-type';
-import { ErrorService, FileMongoHelper, QueryHelper, MongoDBService } from '../helpers';
+import { ErrorService, FileMongoHelper } from '../helpers';
 
 type OutputGet = Buffer;
-export const getFile = ErrorService.catchAsync(async (req: Request, res: Response<OutputGet>) => {
+export const getFile = new Controller<any, OutputGet>(async (req, res) => {
     let routing = req.params.routing;
     let id = req.params.id;
 
@@ -17,4 +17,4 @@ export const getFile = ErrorService.catchAsync(async (req: Request, res: Respons
     let fileType = await FileType.fromBuffer(file.binary.buffer);
     res.contentType(fileType.mime);
     res.send(file.binary.buffer);
-});
+}).func;
