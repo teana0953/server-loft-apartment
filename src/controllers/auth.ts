@@ -55,7 +55,7 @@ export const signup = new Controller<InputSignup, OutputSignup>(async (req, res)
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-}).exec;
+}).func;
 
 /**
  * Sign up with token
@@ -78,7 +78,7 @@ export const signupWithToken = new Controller<InputSignupWithToken, OutputSignup
     } else {
         throw new ErrorService.AppError(`token invalid`, 400);
     }
-}).exec;
+}).func;
 
 /**
  * Sign up Google
@@ -148,7 +148,7 @@ export const signupGoogle = new Controller<InputSignupGoogle, OutputSignupGoogle
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-}).exec;
+}).func;
 
 /**
  * checkAuth
@@ -157,7 +157,7 @@ export const checkAuth = new Controller<any, IResponseBase>(async (req, res) => 
     res.json({
         status: 'ok',
     });
-}).exec;
+}).func;
 
 /**
  * Login
@@ -185,14 +185,14 @@ export const login = new Controller<InputLogin, OutputLogin>(async (req, res) =>
     }
 
     res.json(await getUserWithCookieToken(user, res, req));
-}).exec;
+}).func;
 
 /**
  * Logout
  */
 export type OutputLogout = Date;
 export const logout = new Controller<any, OutputLogout>(async (req, res) => {
-    const user = await IDB.User.findById(req.user?.id);
+    const user = await IDB.User.findById(req.user ?.id);
     if (!user) {
         throw new ErrorService.AppError('invalid', 401);
     }
@@ -200,7 +200,7 @@ export const logout = new Controller<any, OutputLogout>(async (req, res) => {
     res.cookie('token', null, { expires: new Date() });
 
     res.send(new Date());
-}).exec;
+}).func;
 
 /**
  * Forgot password
@@ -248,7 +248,7 @@ export const forgotPassword = new Controller<InputForgotPassword, OutputForgotPa
 
         throw new ErrorService.AppError('there was an error sending the email.', 500);
     }
-}).exec;
+}).func;
 
 /**
  * Reset password
@@ -257,7 +257,7 @@ export type InputResetPassword = IRequest.IAuth.IResetPassword;
 export type OutputResetPassword = OutputUserToken;
 export const resetPassword = new Controller<InputResetPassword, OutputResetPassword>(async (req, res) => {
     let input = req.body;
-    input.token = req.params?.token;
+    input.token = req.params ?.token;
 
     if (!input.token) {
         throw new ErrorService.AppError('token can not empty', 400);
@@ -283,7 +283,7 @@ export const resetPassword = new Controller<InputResetPassword, OutputResetPassw
     await user.save();
 
     res.json(await getUserWithCookieToken(user, res, req));
-}).exec;
+}).func;
 
 /**
  * Update password
@@ -293,7 +293,7 @@ export type OutputUpdatePassword = OutputUserToken;
 export const updatePassword = new Controller<InputUpdatePassword, OutputUpdatePassword>(async (req, res) => {
     let input = req.body;
 
-    const user = await IDB.User.findById(req.user?.id).select('+password');
+    const user = await IDB.User.findById(req.user ?.id).select('+password');
 
     if (!(await user.comparePassword(input.passwordCurrent, user.password))) {
         throw new ErrorService.AppError('your current password is wrong', 401);
@@ -304,7 +304,7 @@ export const updatePassword = new Controller<InputUpdatePassword, OutputUpdatePa
     await user.save();
 
     res.json(await getUserWithCookieToken(user, res, req));
-}).exec;
+}).func;
 
 /**
  * Get token

@@ -14,7 +14,7 @@ export class Controller<Input, Output> {
      * exec
      * @description real controller
      */
-    public get exec() {
+    public get func() {
         return ErrorService.catchAsync(this._callback);
     }
 }
