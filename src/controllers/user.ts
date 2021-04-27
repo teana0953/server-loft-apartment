@@ -90,13 +90,22 @@ const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, re
     let input = req.body;
     let user = req.user;
 
-    let friend = await IDB.User.findOne({ email: input.email });
+    // can not add self
+    if (user.email === input.email) {
+        throw new ErrorService.AppError('can not add self', 400);
+    }
+
+    let friend = await IDB.User.findOne({
+        email: input.email,
+    });
     if (!!friend) {
         if (!checkFriendIsExist(friend.id, user.friends)) {
             user.friends.push({
                 id: friend.id,
             });
             await user.save({ validateBeforeSave: false });
+        } else {
+            throw new ErrorService.AppError(`friend is already added`, 400);
         }
 
         if (!checkFriendIsExist(user.id, friend.friends)) {
