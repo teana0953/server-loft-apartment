@@ -172,3 +172,37 @@ let updateGroup: TValidatorSchema<IUpdateGroup> = {
 };
 
 export const validateUpdateGroup = checkSchema(updateGroup);
+
+/**
+ *
+ */
+export interface IDeleteGroup {
+    id: string;
+}
+
+let deleteGroup: TValidatorSchema<IDeleteGroup> = {
+    id: {
+        in: ['params'],
+        exists: {
+            options: {
+                checkNull: true,
+            },
+            errorMessage: ['id can not empty'],
+        },
+        custom: {
+            options: async (value, { req, location, path }) => {
+                // check whether this user already create with this name
+                let group = await Group.findOne({
+                    _id: new ObjectId(req.params?.id),
+                    createdUserId: req.user.id,
+                });
+                if (!group) {
+                    return Promise.reject();
+                }
+            },
+            errorMessage: 'group not exist',
+        },
+    },
+};
+
+export const validateDeleteGroup = checkSchema(deleteGroup);

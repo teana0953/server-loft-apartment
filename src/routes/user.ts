@@ -13,6 +13,7 @@ enum ERoute {
     getGroups = '/user/groups',
     addGroup = '/user/add-group',
     updateGroup = '/user/update-group',
+    deleteGroup = '/user/delete-group/:id',
 }
 
 UserApi.route(ERoute.updateMe).put(
@@ -35,3 +36,5 @@ UserApi.route(ERoute.getGroups).get(Middleware.checkAuth, validateRequestBase, U
 UserApi.route(ERoute.addGroup).put(Middleware.checkAuth, IRequest.IUser.validateAddGroup, UserController.addGroup);
 
 UserApi.route(ERoute.updateGroup).put(Middleware.checkAuth, IRequest.IUser.validateUpdateGroup, UserController.updateGroup);
+
+UserApi.route(ERoute.deleteGroup).delete(Middleware.checkAuth, IRequest.IUser.validateDeleteGroup, UserController.deleteGroup);
