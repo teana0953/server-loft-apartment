@@ -8,8 +8,6 @@ export const UserApi = express.Router();
 
 enum ERoute {
     updateMe = '/user/update-me',
-    getFriends = '/user/friends',
-    addFriend = '/user/add-friend',
     getGroups = '/user/groups',
     addGroup = '/user/add-group',
     updateGroup = '/user/update-group',
@@ -24,11 +22,6 @@ UserApi.route(ERoute.updateMe).put(
     Middleware.uploadSinglePhoto('photo'),
     UserController.updateMe,
 );
-
-/// friends
-UserApi.route(ERoute.getFriends).get(Middleware.checkAuth, validateRequestBase, UserController.getFriends);
-
-UserApi.route(ERoute.addFriend).put(Middleware.checkAuth, IRequest.IUser.validateAddFriend, UserController.addFriend);
 
 /// groups
 UserApi.route(ERoute.getGroups).get(Middleware.checkAuth, validateRequestBase, UserController.getGroups);
