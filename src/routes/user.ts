@@ -10,6 +10,7 @@ enum ERoute {
     updateMe = '/user/update-me',
     getFriends = '/user/friends',
     addFriend = '/user/add-friend',
+    getGroups = '/user/groups',
     addGroup = '/user/add-group',
 }
 
@@ -28,4 +29,6 @@ UserApi.route(ERoute.getFriends).get(Middleware.checkAuth, validateRequestBase, 
 UserApi.route(ERoute.addFriend).put(Middleware.checkAuth, IRequest.IUser.validateAddFriend, UserController.addFriend);
 
 /// groups
+UserApi.route(ERoute.getGroups).get(Middleware.checkAuth, validateRequestBase, UserController.getGroups);
+
 UserApi.route(ERoute.addGroup).put(Middleware.checkAuth, IRequest.IUser.validateAddGroup, UserController.addGroup);

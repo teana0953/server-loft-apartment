@@ -8,7 +8,7 @@ import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 import Crypto from 'crypto';
 
-export { updateMe, addFriend, getFriends, addGroup };
+export { updateMe, addFriend, getFriends, addGroup, getGroups };
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -258,6 +258,47 @@ const addGroup = new Controller<InputAddGroup, OutputAddGroup>(async (req, res) 
             photoOriginalUrl: user.photoOriginalUrl,
             role: user.role,
         },
+    });
+}).func;
+
+/**
+ * Get groups
+ */
+type InputGetGroup = IRequestBase;
+type OutputGetGroup = IResponseBase<IResponse.IUser.IGroup[]>;
+const getGroups = new Controller<InputGetGroup, OutputGetGroup>(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    let input = req.params;
+    let user = req.user;
+    let groupIds = user.groups.map((item) => new ObjectId(item.id));
+
+    let oriQuery = IDB.Group.find({ _id: { $in: groupIds } });
+    let queryService = await new QueryHelper<IDB.GroupDocument[], IDB.GroupDocument>(IDB.Group.find({ _id: { $in: groupIds } }), req.query);
+    let total: number = await oriQuery.countDocuments();
+
+    queryService = queryService //
+        .sort()
+        .paginate();
+
+    let result = await queryService.query;
+
+    res.json({
+        status: 'ok',
+        total: total,
+        page: queryService.page,
+        limit: queryService.limit,
+        data: result.map((item) => {
+            return {
+                id: item.id,
+                name: item.name,
+                userIds: item.userIds,
+                createdUserId: item.createdUserId,
+            };
+        }),
     });
 }).func;
 
