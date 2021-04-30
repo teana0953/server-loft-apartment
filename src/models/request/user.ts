@@ -56,7 +56,7 @@ let addGroup: TValidatorSchema<IAddGroup> = {
                 // check whether this user already create with this name
                 let group = await Group.findOne({ name: value, createdUserId: req.user?._id });
                 if (group) {
-                    return false;
+                    return Promise.reject();
                 }
             },
             errorMessage: 'name duplicated',
@@ -68,6 +68,13 @@ let addGroup: TValidatorSchema<IAddGroup> = {
             options: {
                 checkNull: true,
             },
+            errorMessage: ['userIds can not empty'],
+        },
+        isArray: {
+            options: {
+                min: 0,
+            },
+            errorMessage: ['userIds should be an array'],
         },
         customSanitizer: {
             options: (value: string[]) => {

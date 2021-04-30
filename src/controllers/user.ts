@@ -8,7 +8,7 @@ import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 import Crypto from 'crypto';
 
-export { updateMe, addFriend, getFriends };
+export { updateMe, addFriend, getFriends, addGroup };
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -54,6 +54,8 @@ const updateMe = new Controller<InputUpdateMe, OutputUpdateMe>(async (req, res) 
             id: user.id,
             name: user.name,
             email: user.email,
+            friends: user.friends,
+            groups: user.groups,
             role: user.role,
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
@@ -80,7 +82,7 @@ export async function savePhoto(buffer: Buffer, url: string): Promise<string> {
  * Add friend
  */
 type InputAddFriend = IRequest.IUser.IAddFriend;
-type OutputAddFriend = IResponseBase<IResponse.IUser.IFriend>;
+type OutputAddFriend = IResponseBase<IResponse.IAuth.ISignup>;
 const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -154,10 +156,14 @@ const addFriend = new Controller<InputAddFriend, OutputAddFriend>(async (req, re
     res.json({
         status: 'ok',
         data: {
-            id: friend.id,
-            name: friend.name,
-            email: friend.email,
-            photoUrl: friend.photoUrl,
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            friends: user.friends,
+            groups: user.groups,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
+            role: user.role,
         },
     });
 }).func;
@@ -200,6 +206,58 @@ const getFriends = new Controller<InputGetFriend, OutputGetFriend>(async (req, r
                 photoUrl: item.photoUrl,
             };
         }),
+    });
+}).func;
+
+/**
+ * Add Group
+ */
+type InputAddGroup = IRequest.IUser.IAddGroup;
+type OutputAddGroup = IResponseBase<IResponse.IAuth.ISignup>;
+const addGroup = new Controller<InputAddGroup, OutputAddGroup>(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    let input = req.body;
+    let user = req.user;
+
+    // get users in userIds
+    let users = await IDB.User.find({ id: { $in: input.userIds } });
+    users.push(user);
+
+    // update userIds
+    input.userIds = users.map((user) => user.id);
+
+    let group = await IDB.Group.create({
+        name: input.name,
+        userIds: input.userIds,
+        createdUserId: user.id,
+    });
+
+    // update users groups
+    await Promise.all(
+        users.map(async (user) => {
+            user.groups.push({
+                id: group.id,
+            });
+            await user.save({ validateBeforeSave: false });
+        }),
+    );
+
+    res.json({
+        status: 'ok',
+        data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            friends: user.friends,
+            groups: user.groups,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
+            role: user.role,
+        },
     });
 }).func;
 

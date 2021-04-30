@@ -28,10 +28,9 @@ const GroupSchemaDefinition: Mongoose.SchemaDefinitionProperty<IGroup> = {
         validate: {
             validator: function (value) {
                 if (!Array.isArray(value)) return false;
-                if (value.length === 0) return false;
                 return true;
             },
-            message: 'userIds can not empty',
+            message: 'userIds should be array',
         },
     },
     createdUserId: {
