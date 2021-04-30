@@ -349,6 +349,8 @@ async function getUserWithCookieToken(user: IDB.UserDocument, res: Response<any>
             id: user.id,
             name: user.name,
             email: user.email,
+            friends: user.friends,
+            groups: user.groups,
             photoUrl: user.photoUrl,
             photoOriginalUrl: user.photoOriginalUrl,
             role: user.role,
