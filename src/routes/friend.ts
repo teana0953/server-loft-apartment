@@ -7,10 +7,13 @@ import { IRequest, validateRequestBase } from '../models';
 export const FriendApi = express.Router();
 
 enum ERoute {
-    getFriends = '/friends',
-    addFriend = '/friend',
+    friends = '/friends',
+    friend = '/friend',
+    deleteFriend = '/friend/:id',
 }
 
-FriendApi.route(ERoute.getFriends).get(Middleware.checkAuth, validateRequestBase, FriendController.getFriends);
+FriendApi.route(ERoute.friends).get(Middleware.checkAuth, validateRequestBase, FriendController.getFriends);
 
-FriendApi.route(ERoute.addFriend).post(Middleware.checkAuth, IRequest.IFriend.validateAddFriend, FriendController.addFriend);
+FriendApi.route(ERoute.friend).post(Middleware.checkAuth, IRequest.IFriend.validateAddFriend, FriendController.addFriend);
+
+FriendApi.route(ERoute.deleteFriend).delete(Middleware.checkAuth, IRequest.IFriend.validateDeleteFriend, FriendController.deleteFriend);

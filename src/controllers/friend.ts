@@ -6,7 +6,7 @@ import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 import Crypto from 'crypto';
 
-export { addFriend, getFriends };
+export { addFriend, getFriends, deleteFriend };
 
 /**
  * Add friend
@@ -136,6 +136,47 @@ const getFriends = new Controller<InputGetFriend, OutputGetFriend>(async (req, r
                 photoUrl: item.photoUrl,
             };
         }),
+    });
+}).func;
+
+/**
+ * Delete Friend
+ */
+type InputDeleteFriend = IRequest.IFriend.IDeleteFriend;
+type OutpuDeleteFriend = IResponseBase<IResponse.IAuth.ISignup>;
+const deleteFriend = new Controller<InputDeleteFriend, OutpuDeleteFriend>(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    let input = req.params;
+    let user = req.user;
+    let index = user.friends.findIndex((item) => item.id === input.id);
+    if (index > -1) {
+        user.friends.splice(index, 1);
+        await user.save({ validateBeforeSave: false });
+    }
+
+    let friend = await IDB.User.findOne({ _id: new ObjectId(input.id) });
+    index = friend.friends.findIndex((item) => item.id === user.id);
+    if (index > -1) {
+        friend.friends.splice(index, 1);
+        await friend.save({ validateBeforeSave: false });
+    }
+
+    res.json({
+        status: 'ok',
+        data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            friends: user.friends,
+            groups: user.groups,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
+            role: user.role,
+        },
     });
 }).func;
 
