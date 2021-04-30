@@ -8,7 +8,7 @@ import { validationResult } from 'express-validator';
 import ActionEmail from '../action/email';
 import Crypto from 'crypto';
 
-export { updateMe, addFriend, getFriends, addGroup, getGroups };
+export { updateMe, addFriend, getFriends, addGroup, getGroups, updateGroup };
 
 const UserPhotoCollectionName = 'FileUserPhoto';
 
@@ -224,8 +224,7 @@ const addGroup = new Controller<InputAddGroup, OutputAddGroup>(async (req, res) 
     let user = req.user;
 
     // get users in userIds
-    let users = await IDB.User.find({ id: { $in: input.userIds } });
-    users.push(user);
+    let users = await IDB.User.find({ _id: { $in: input.userIds } });
 
     // update userIds
     input.userIds = users.map((user) => user.id);
@@ -299,6 +298,71 @@ const getGroups = new Controller<InputGetGroup, OutputGetGroup>(async (req, res)
                 createdUserId: item.createdUserId,
             };
         }),
+    });
+}).func;
+
+/**
+ * Update Group
+ */
+type InputUpdateGroup = IRequest.IUser.IUpdateGroup;
+type OutputUpdateGroup = IResponseBase<IResponse.IAuth.ISignup>;
+const updateGroup = new Controller<InputUpdateGroup, OutputUpdateGroup>(async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw errors;
+    }
+
+    console.log(req.body);
+
+    let input = req.body;
+    let user = req.user;
+
+    let group = await IDB.Group.findOne({
+        _id: new ObjectId(input.id),
+    });
+
+    // get users which have this group
+    let needDeleteUsers = await IDB.User.find({ 'groups.id': { $in: [input.id] } });
+    await Promise.all(
+        needDeleteUsers.map(async (user) => {
+            user.groups = user.groups.filter((group) => group.id !== input.id);
+            await user.save({ validateBeforeSave: false });
+        }),
+    );
+
+    // get users in userIds
+    let users = await IDB.User.find({ _id: { $in: input.userIds } });
+
+    // update userIds
+    input.userIds = users.map((user) => user.id);
+
+    // update users groups
+    await Promise.all(
+        users.map(async (user) => {
+            user.groups.push({
+                id: group.id,
+            });
+            await user.save({ validateBeforeSave: false });
+        }),
+    );
+
+    // update group self
+    group.name = input.name;
+    group.userIds = input.userIds;
+    await group.save();
+
+    res.json({
+        status: 'ok',
+        data: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            friends: user.friends,
+            groups: user.groups,
+            photoUrl: user.photoUrl,
+            photoOriginalUrl: user.photoOriginalUrl,
+            role: user.role,
+        },
     });
 }).func;
 
