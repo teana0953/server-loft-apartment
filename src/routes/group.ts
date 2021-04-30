@@ -6,17 +6,16 @@ import { IRequest, validateRequestBase } from '../models';
 export const GroupApi = express.Router();
 
 enum ERoute {
-    getGroups = '/groups',
-    addGroup = '/group',
-    updateGroup = '/group',
+    groups = '/groups',
+    group = '/group',
     deleteGroup = '/group/:id',
 }
 
 /// groups
-GroupApi.route(ERoute.getGroups).get(Middleware.checkAuth, validateRequestBase, GroupController.getGroups);
+GroupApi.route(ERoute.groups).get(Middleware.checkAuth, validateRequestBase, GroupController.getGroups);
 
-GroupApi.route(ERoute.addGroup).post(Middleware.checkAuth, IRequest.IGroup.validateAddGroup, GroupController.addGroup);
+GroupApi.route(ERoute.group).post(Middleware.checkAuth, IRequest.IGroup.validateAddGroup, GroupController.addGroup);
 
-GroupApi.route(ERoute.updateGroup).put(Middleware.checkAuth, IRequest.IGroup.validateUpdateGroup, GroupController.updateGroup);
+GroupApi.route(ERoute.group).put(Middleware.checkAuth, IRequest.IGroup.validateUpdateGroup, GroupController.updateGroup);
 
 GroupApi.route(ERoute.deleteGroup).delete(Middleware.checkAuth, IRequest.IGroup.validateDeleteGroup, GroupController.deleteGroup);
