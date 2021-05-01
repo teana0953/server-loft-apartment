@@ -32,10 +32,6 @@ export interface IUserGroup {
     id: string;
 }
 
-export interface IUserExpense {
-    id: string;
-}
-
 export interface UserDocument extends IUser, Document, IExtendMethod {}
 
 export interface IExtendMethod {
@@ -122,11 +118,6 @@ export interface IUser {
      *
      */
     groups: IUserGroup[];
-
-    /**
-     *
-     */
-    expenses: IUserExpense[];
 }
 //#endregion Interfaces
 
@@ -213,14 +204,6 @@ const SchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
         },
     ],
     groups: [
-        {
-            _id: false,
-            id: {
-                type: String,
-            },
-        },
-    ],
-    expenses: [
         {
             _id: false,
             id: {
