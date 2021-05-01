@@ -4,5 +4,6 @@ import { ServerApi } from './server';
 import { UserApi } from './user';
 import { FriendApi } from './friend';
 import { GroupApi } from './group';
+import { ExpenseApi } from './expense';
 
-export const Apis = [AuthApi, FileApi, ServerApi, UserApi, FriendApi, GroupApi];
+export const Apis = [AuthApi, FileApi, ServerApi, UserApi, FriendApi, GroupApi, ExpenseApi];

@@ -43,6 +43,11 @@ let addExpense: TValidatorSchema<IAddExpense> = {
         },
         custom: {
             options: async (value, { req, location, path }) => {
+                // check payerId is in users
+                if ((req.body?.users || []).findIndex((user) => user.id === value) < 0) {
+                    return Promise.reject();
+                }
+
                 let user = await User.findOne({
                     _id: new ObjectId(value),
                 });
@@ -63,20 +68,9 @@ let addExpense: TValidatorSchema<IAddExpense> = {
         },
         isArray: {
             options: {
-                min: 1,
+                min: 2,
             },
-            errorMessage: ['users should be at least have one'],
-        },
-        custom: {
-            options: async (value, { req, location, path }) => {
-                let user = await User.findOne({
-                    _id: new ObjectId(value),
-                });
-                if (!user) {
-                    return Promise.reject();
-                }
-            },
-            errorMessage: 'payer not exist',
+            errorMessage: ['users should be at least have two'],
         },
     },
     date: {
@@ -87,9 +81,11 @@ let addExpense: TValidatorSchema<IAddExpense> = {
             },
             errorMessage: ['date can not empty'],
         },
-        isDate: {
-            bail: true,
-            errorMessage: ['date format error'],
+        custom: {
+            options: (value, { req, location, path }) => {
+                return !isNaN(Date.parse(value));
+            },
+            errorMessage: 'date invalid format',
         },
     },
 };
@@ -175,17 +171,6 @@ let updateExpense: TValidatorSchema<IUpdateExpense> = {
                 min: 1,
             },
             errorMessage: ['users should be at least have one'],
-        },
-        custom: {
-            options: async (value, { req, location, path }) => {
-                let user = await User.findOne({
-                    _id: new ObjectId(value),
-                });
-                if (!user) {
-                    return Promise.reject();
-                }
-            },
-            errorMessage: 'payer not exist',
         },
     },
     date: {
