@@ -1,5 +1,10 @@
 import Mongoose, { Model, Document, Schema } from 'mongoose';
+import { MongooseBase } from './base';
 
+//#region Interfaces
+export interface GroupDocument extends IGroup, Document {}
+
+export interface GroupModel extends Model<GroupDocument> {}
 export interface IGroup {
     /**
      *
@@ -16,8 +21,9 @@ export interface IGroup {
      */
     createdUserId: string;
 }
+//#endregion Interfaces
 
-const GroupSchemaDefinition: Mongoose.SchemaDefinitionProperty<IGroup> = {
+const SchemaDefinition: Mongoose.SchemaDefinitionProperty<IGroup> = {
     name: {
         type: String,
         required: [true, 'name can not empty'],
@@ -38,22 +44,21 @@ const GroupSchemaDefinition: Mongoose.SchemaDefinitionProperty<IGroup> = {
     },
 };
 
-export interface GroupDocument extends IGroup, Document {}
-
-export interface GroupModel extends Model<GroupDocument> {}
-
-const groupSchema: Schema<GroupDocument> = new Mongoose.Schema<GroupDocument>(GroupSchemaDefinition, {
-    collection: 'Group',
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    timestamps: true,
+const Base = new MongooseBase<IGroup, any, GroupDocument>({
+    collectionName: 'Group',
+    schemaDefinition: SchemaDefinition,
+    schemaOptions: {
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+        timestamps: true,
+    },
 });
 
-groupSchema.pre('save', async function (next) {
+Base.schema.pre('save', async function (next) {
     // TODO
     // check whether userIds be empty, if empty => delete this group
 
     return next();
 });
 
-export const Group = Mongoose.model<GroupDocument, GroupModel>('Group', groupSchema);
+export const Group = Base.getModel();
