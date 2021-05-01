@@ -1,9 +1,22 @@
 import { Utility } from '../../helpers';
-import Mongoose, { Model, Document, Schema } from 'mongoose';
+import Mongoose, { Document } from 'mongoose';
 import { ObjectId } from 'mongodb';
 import Validator from 'validator';
 import Bcrypt from 'bcrypt';
 import Crypto from 'crypto';
+import { MongooseBase } from './base';
+
+//#region Interfaces
+export enum EUserRole {
+    user = 'user',
+    admin = 'admin',
+}
+
+export type TUserRole = keyof typeof EUserRole;
+
+export interface IUserJWTPayload {
+    id: string;
+}
 
 export interface IUserFriend {
     id: string;
@@ -23,15 +36,13 @@ export interface IUserExpense {
     id: string;
 }
 
-export enum EUserRole {
-    user = 'user',
-    admin = 'admin',
-}
+export interface UserDocument extends IUser, Document, IExtendMethod {}
 
-export type TUserRole = keyof typeof EUserRole;
-
-export interface IUserJWTPayload {
-    id: string;
+export interface IExtendMethod {
+    comparePassword(inputPassword: string, userPassword: string): Promise<boolean>;
+    isPasswordChanged(jwtTimestamp: number): boolean;
+    getPasswordResetToken(): string;
+    getFriendInfos(): Promise<IUserFriendInfo[]>;
 }
 
 export interface IUser {
@@ -117,8 +128,9 @@ export interface IUser {
      */
     expenses: IUserExpense[];
 }
+//#endregion Interfaces
 
-const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
+const SchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
     name: {
         type: String,
         required: [true, 'name can not empty'],
@@ -218,23 +230,17 @@ const UserSchemaDefinition: Mongoose.SchemaDefinitionProperty<IUser> = {
     ],
 };
 
-export interface UserDocument extends IUser, Document {
-    comparePassword(inputPassword: string, userPassword: string): Promise<boolean>;
-    isPasswordChanged(jwtTimestamp: number): boolean;
-    getPasswordResetToken(): string;
-    getFriendInfos(): Promise<IUserFriendInfo[]>;
-}
-
-export interface UserModel extends Model<UserDocument> {}
-
-const userSchema: Schema<UserDocument> = new Mongoose.Schema<UserDocument>(UserSchemaDefinition, {
-    collection: 'User',
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    timestamps: true,
+const Base = new MongooseBase<IUser, IExtendMethod, UserDocument>({
+    collectionName: 'User',
+    schemaDefinition: SchemaDefinition,
+    schemaOptions: {
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+        timestamps: true,
+    },
 });
 
-userSchema.pre('save', async function (next) {
+Base.schema.pre('save', async function (next) {
     // only encrypt password when it modified
     if (!this.isModified('password')) {
         return next();
@@ -249,12 +255,12 @@ userSchema.pre('save', async function (next) {
     return next();
 });
 
-/// extend methods
-userSchema.methods.comparePassword = async function (inputPassword, userPassword) {
+//#region Extend Methods
+Base.addMethod('comparePassword', async function (inputPassword, userPassword) {
     return await Bcrypt.compare(inputPassword, userPassword);
-};
+});
 
-userSchema.methods.isPasswordChanged = function (jwtTimestamp: number) {
+Base.addMethod('isPasswordChanged', function (jwtTimestamp: number) {
     if (this.passwordUpdatedAt) {
         const updatedTimestamp: number = Math.round(this.passwordUpdatedAt.getTime() / 1000);
 
@@ -262,9 +268,9 @@ userSchema.methods.isPasswordChanged = function (jwtTimestamp: number) {
     }
 
     return false;
-};
+});
 
-userSchema.methods.getPasswordResetToken = function () {
+Base.addMethod('getPasswordResetToken', function () {
     const resetToken = Crypto.randomBytes(32).toString('hex');
 
     this.passwordResetToken = Crypto.createHash('sha256') //
@@ -274,9 +280,9 @@ userSchema.methods.getPasswordResetToken = function () {
     this.passwordResetExpiresTimestamp = Date.now() + Number(process.env.RESET_PASSWORD_EXPIRES_MIN) * 60 * 1000;
 
     return resetToken;
-};
+});
 
-userSchema.methods.getFriendInfos = async function () {
+Base.addMethod('getFriendInfos', async function () {
     let friendIds: ObjectId[] = this.friends.map((item) => new ObjectId(item.id));
     let friends = await User.find({
         _id: {
@@ -292,6 +298,8 @@ userSchema.methods.getFriendInfos = async function () {
             photoUrl: friend.photoUrl,
         };
     });
-};
+});
 
-export const User = Mongoose.model<UserDocument, UserModel>('User', userSchema);
+//#endregion Extend Methods
+
+export const User = Base.getModel();
